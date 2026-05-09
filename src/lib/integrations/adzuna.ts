@@ -59,7 +59,6 @@ export async function searchAdzunaJobs(
     app_key: appKey,
     what: params.query,
     results_per_page: String(params.resultsPerPage ?? 20),
-    content_type: "application/json",
   });
 
   if (params.location) {
