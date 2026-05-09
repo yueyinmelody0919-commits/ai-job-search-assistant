@@ -1,55 +1,144 @@
 "use client";
 
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Briefcase,
-  Mail,
-  TrendingUp,
-  ThumbsUp,
-  ThumbsDown,
-  Bot,
-  Search,
-  BarChart3,
-  Pen,
+  Briefcase, Mail, TrendingUp, ThumbsUp, ThumbsDown,
+  Bot, Search, BarChart3, Pen, Loader2, RefreshCw,
 } from "lucide-react";
 
-const stats = [
-  { label: "Jobs Discovered", value: "47", change: "+12 this week", icon: Search, color: "text-blue-400" },
-  { label: "Scored", value: "38", change: "6 pending", icon: BarChart3, color: "text-purple-400" },
-  { label: "Outreached", value: "8", change: "3 replies", icon: Mail, color: "text-green-400" },
-  { label: "Interviews", value: "2", change: "1 this week", icon: Briefcase, color: "text-amber-400" },
-];
+interface PipelineStage { stage: string; count: number }
+interface JobEntry {
+  job: { id: number; title: string; company: string; location: string; url: string };
+  overallScore: number | null;
+  stage: string | null;
+}
+interface AgentLog {
+  agent: string; action: string; details: string | null;
+  outcome: string | null; createdAt: string;
+}
 
-const approvalQueue = [
-  { id: 1, type: "email", company: "Figma", title: "Director, Strategy & Ops", score: 94, action: "Outreach email drafted by Jim", urgent: true },
-  { id: 2, type: "email", company: "Notion", title: "Head of Business Operations", score: 91, action: "Follow-up email (no reply in 5 days)", urgent: false },
-  { id: 3, type: "review", company: "Ramp", title: "VP, Revenue Operations", score: 88, action: "New job — review and approve outreach", urgent: false },
-];
-
-const agentActivity = [
-  { agent: "Dwight", action: "Found 3 new Director-level roles matching your criteria", time: "2m ago", emoji: "🔍" },
-  { agent: "Oscar", action: "Scored Figma role: 94/100 — strong AI-native culture fit", time: "5m ago", emoji: "📊" },
-  { agent: "Jim", action: "Drafted outreach email for Figma VP of Product", time: "8m ago", emoji: "✉️" },
-  { agent: "Angela", action: "Follow-up with Notion is overdue. Moved to URGENT.", time: "15m ago", emoji: "⏰" },
-  { agent: "Darryl", action: "Yo, I added salary comparison charts to the feed view", time: "1h ago", emoji: "🛠️" },
-  { agent: "Holly", action: "Found a great course on AI agent architectures for you!", time: "2h ago", emoji: "📚" },
-  { agent: "Stanley", action: "Fixed the scoring timeout bug. Can I go home now?", time: "3h ago", emoji: "🐛" },
-];
-
-const hotCompanies = [
-  { name: "Figma", signal: "Hiring 3 S&O roles", score: 94 },
-  { name: "Ramp", signal: "Series D, $300M raised", score: 88 },
-  { name: "Notion", signal: "New CoS to CEO opening", score: 91 },
-  { name: "Anthropic", signal: "AI-native, rapid growth", score: 86 },
-  { name: "Scale AI", signal: "GTM expansion, NYC office", score: 83 },
-];
+const agentEmojis: Record<string, string> = {
+  scout: "🔍", analyst: "📊", strategist: "✉️", ops: "⏰",
+  engineer: "🛠️", coach: "📚", qa: "🐛", system: "⚙️",
+};
+const agentNames: Record<string, string> = {
+  scout: "Dwight", analyst: "Oscar", strategist: "Jim", ops: "Angela",
+  engineer: "Darryl", coach: "Holly", qa: "Stanley", system: "System",
+};
 
 export default function MorningBrief() {
+  const [stages, setStages] = useState<PipelineStage[]>([]);
+  const [recentJobs, setRecentJobs] = useState<JobEntry[]>([]);
+  const [agentLogs, setAgentLogs] = useState<AgentLog[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const [scoring, setScoring] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [pipelineRes, jobsRes, agentsRes] = await Promise.all([
+        fetch("/api/pipeline"),
+        fetch("/api/jobs?limit=20"),
+        fetch("/api/agents"),
+      ]);
+
+      const pipelineData = await pipelineRes.json();
+      const jobsData = await jobsRes.json();
+      const agentsData = await agentsRes.json();
+
+      setStages(pipelineData.stages || []);
+      setRecentJobs(jobsData.jobs || []);
+
+      const logs: AgentLog[] = [];
+      for (const agent of agentsData.agents || []) {
+        if (agent.lastAction) logs.push(agent.lastAction);
+      }
+      setAgentLogs(logs.sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+    } catch {
+      // API might not be ready yet
+    }
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    fetchData().finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
+  }, [fetchData]);
+
+  async function triggerScan() {
+    setScanning(true);
+    try {
+      const res = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "scan" }),
+      });
+      const data = await res.json();
+      alert(`Scan complete: ${data.count} new jobs found`);
+      fetchData();
+    } catch {
+      alert("Scan failed — check API keys in .env");
+    }
+    setScanning(false);
+  }
+
+  async function triggerBatchScore() {
+    setScoring(true);
+    try {
+      const res = await fetch("/api/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ batch: true }),
+      });
+      const data = await res.json();
+      const scored = data.results?.filter((r: { status: string }) => r.status === "scored").length || 0;
+      alert(`Scored ${scored} jobs`);
+      fetchData();
+    } catch {
+      alert("Scoring failed — check ANTHROPIC_API_KEY in .env");
+    }
+    setScoring(false);
+  }
+
+  const totalJobs = stages.reduce((s, st) => s + st.count, 0);
+  const scoredJobs = recentJobs.filter(j => j.overallScore !== null).length;
+  const outreachedJobs = stages.find(s => s.stage === "outreached")?.count || 0;
+  const interviewJobs = stages.find(s => s.stage === "interviewing")?.count || 0;
+
+  const stats = [
+    { label: "Jobs Discovered", value: String(totalJobs), icon: Search, color: "text-blue-400" },
+    { label: "Scored", value: String(scoredJobs), icon: BarChart3, color: "text-purple-400" },
+    { label: "Outreached", value: String(outreachedJobs), icon: Mail, color: "text-green-400" },
+    { label: "Interviews", value: String(interviewJobs), icon: Briefcase, color: "text-amber-400" },
+  ];
+
+  // High-score jobs pending approval
+  const approvalQueue = recentJobs
+    .filter(j => j.overallScore && j.overallScore >= 80 && j.stage === "discovered")
+    .sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0))
+    .slice(0, 5);
+
   return (
     <div className="space-y-6">
+      {/* Action Buttons */}
+      <div className="flex gap-3">
+        <Button onClick={triggerScan} disabled={scanning} className="bg-blue-600 hover:bg-blue-700">
+          {scanning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
+          {scanning ? "Scanning..." : "Scan for Jobs"}
+        </Button>
+        <Button onClick={triggerBatchScore} disabled={scoring} variant="outline" className="border-white/10 text-white/70 hover:bg-white/10">
+          {scoring ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <BarChart3 className="h-4 w-4 mr-2" />}
+          {scoring ? "Scoring..." : "Score Unscored Jobs"}
+        </Button>
+        <Button onClick={fetchData} variant="ghost" className="text-white/40 hover:text-white">
+          <RefreshCw className="h-4 w-4" />
+        </Button>
+      </div>
+
       {/* Stats Row */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
@@ -58,8 +147,7 @@ export default function MorningBrief() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-white/50">{stat.label}</p>
-                  <p className="text-2xl font-bold text-white">{stat.value}</p>
-                  <p className="text-xs text-white/40 mt-1">{stat.change}</p>
+                  <p className="text-2xl font-bold text-white">{loading ? "—" : stat.value}</p>
                 </div>
                 <stat.icon className={`h-8 w-8 ${stat.color} opacity-50`} />
               </div>
@@ -69,41 +157,43 @@ export default function MorningBrief() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Approval Queue */}
+        {/* Approval Queue / Recent High-Score Jobs */}
         <div className="lg:col-span-2">
           <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base text-white">Approval Queue</CardTitle>
-                <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs">
-                  {approvalQueue.length} pending
-                </Badge>
+                <CardTitle className="text-base text-white">
+                  {approvalQueue.length > 0 ? "Approval Queue" : "Recent Jobs"}
+                </CardTitle>
+                {approvalQueue.length > 0 && (
+                  <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs">
+                    {approvalQueue.length} pending
+                  </Badge>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {approvalQueue.map((item) => (
-                <div key={item.id} className="group flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-4 transition-colors hover:bg-white/[0.05]">
+              {(approvalQueue.length > 0 ? approvalQueue : recentJobs.slice(0, 5)).map((entry) => (
+                <div key={entry.job.id} className="group flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-4 transition-colors hover:bg-white/[0.05]">
                   <div className="flex items-center gap-4">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${item.score >= 90 ? "bg-green-500/20 text-green-400" : "bg-blue-500/20 text-blue-400"}`}>
-                      <span className="text-sm font-bold">{item.score}</span>
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                      (entry.overallScore || 0) >= 90 ? "bg-green-500/20 text-green-400"
+                      : (entry.overallScore || 0) >= 80 ? "bg-blue-500/20 text-blue-400"
+                      : "bg-white/10 text-white/40"
+                    }`}>
+                      <span className="text-sm font-bold">{entry.overallScore || "—"}</span>
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-white">{item.company}</span>
-                        <span className="text-xs text-white/40">{item.title}</span>
-                        {item.urgent && (
-                          <Badge className="bg-red-500/20 text-red-300 text-[10px] border-red-500/30">Urgent</Badge>
-                        )}
+                        <span className="text-sm font-medium text-white">{entry.job.company}</span>
+                        <span className="text-xs text-white/40">{entry.job.title}</span>
                       </div>
-                      <p className="text-xs text-white/50 mt-0.5">{item.action}</p>
+                      <p className="text-xs text-white/30 mt-0.5">{entry.job.location}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
                     <Button size="sm" variant="ghost" className="h-8 text-green-400 hover:text-green-300 hover:bg-green-500/10">
                       <ThumbsUp className="h-3.5 w-3.5 mr-1" /> Approve
-                    </Button>
-                    <Button size="sm" variant="ghost" className="h-8 text-white/40 hover:text-white hover:bg-white/10">
-                      <Pen className="h-3.5 w-3.5 mr-1" /> Edit
                     </Button>
                     <Button size="sm" variant="ghost" className="h-8 text-red-400/60 hover:text-red-400 hover:bg-red-500/10">
                       <ThumbsDown className="h-3.5 w-3.5" />
@@ -111,6 +201,11 @@ export default function MorningBrief() {
                   </div>
                 </div>
               ))}
+              {recentJobs.length === 0 && !loading && (
+                <p className="text-sm text-white/30 text-center py-8">
+                  No jobs yet. Click &quot;Scan for Jobs&quot; to discover opportunities.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -126,48 +221,29 @@ export default function MorningBrief() {
           <CardContent>
             <ScrollArea className="h-[320px]">
               <div className="space-y-3">
-                {agentActivity.map((activity, i) => (
+                {agentLogs.length > 0 ? agentLogs.map((log, i) => (
                   <div key={i} className="flex gap-3 rounded-lg p-2 transition-colors hover:bg-white/[0.03]">
-                    <span className="text-lg">{activity.emoji}</span>
+                    <span className="text-lg">{agentEmojis[log.agent] || "🤖"}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-white/80">
-                        <span className="font-medium text-white">{activity.agent}</span>{" "}
-                        {activity.action}
+                        <span className="font-medium text-white">{agentNames[log.agent] || log.agent}</span>{" "}
+                        {log.action.replace(/_/g, " ")}
                       </p>
-                      <p className="text-[10px] text-white/30 mt-0.5">{activity.time}</p>
+                      <p className="text-[10px] text-white/30 mt-0.5">
+                        {new Date(log.createdAt).toLocaleTimeString()}
+                      </p>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-xs text-white/30 text-center py-4">
+                    No activity yet. Scan for jobs to get started.
+                  </p>
+                )}
               </div>
             </ScrollArea>
           </CardContent>
         </Card>
       </div>
-
-      {/* Hot Companies */}
-      <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base text-white flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-green-400" />
-            Market Pulse — Hot Companies This Week
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {hotCompanies.map((company) => (
-              <div key={company.name} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-3 transition-colors hover:bg-white/[0.05] cursor-pointer">
-                <div>
-                  <p className="text-sm font-medium text-white">{company.name}</p>
-                  <p className="text-[10px] text-white/40">{company.signal}</p>
-                </div>
-                <Badge variant="outline" className={`text-xs ${company.score >= 90 ? "border-green-500/30 text-green-400" : "border-blue-500/30 text-blue-400"}`}>
-                  {company.score}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
