@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PipelineSankey } from "@/components/charts/pipeline-sankey";
 
 const stages = [
   { id: "discovered", label: "Discovered", color: "bg-gray-500", count: 32 },
@@ -52,6 +53,17 @@ export default function PipelinePage() {
   return (
     <div className="space-y-6">
       {/* Stage summary bar */}
+      {/* Sankey Diagram */}
+      <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm text-white">Pipeline Flow</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PipelineSankey />
+        </CardContent>
+      </Card>
+
+      {/* Stage summary */}
       <div className="flex gap-2 overflow-x-auto pb-2">
         {stages.map((stage) => (
           <div

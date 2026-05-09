@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { ScoreRadar } from "@/components/charts/score-radar";
 import {
   Search,
   ThumbsUp,
@@ -199,6 +200,11 @@ export default function JobFeed() {
               </SheetHeader>
 
               <div className="mt-6 space-y-6">
+                {/* Radar Chart */}
+                <ScoreRadar scores={selectedJob.scores} />
+
+                <Separator className="bg-white/10" />
+
                 {/* Score Breakdown */}
                 <div>
                   <h4 className="text-sm font-medium text-white mb-3">Score Breakdown</h4>
