@@ -1,0 +1,4 @@
+#!/bin/sh
+# Auto-push to remote after every commit
+# Skip if no remote is configured yet
+git remote get-url origin >/dev/null 2>&1 && git push origin "$(git branch --show-current)" 2>/dev/null || true
