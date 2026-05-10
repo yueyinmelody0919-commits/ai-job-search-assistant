@@ -323,6 +323,17 @@ async function main() {
         }
       } catch (error) {
         console.error(`  ✗ ${agent.config.name} error:`, error);
+        const err = error instanceof Error ? error : new Error(String(error));
+        const bugId = await agent.reportBug(
+          `${agent.config.displayName} failed to respond in Slack`,
+          `Agent encountered an error while processing a channel message.`,
+          err,
+          { userMessage: text.slice(0, 500), channel },
+        );
+        await postAsAgent("qa", channel,
+          `Did I stutter? Something broke with ${agent.config.character}. I've logged bug #${bugId}. ${deepLink("/bugs", "🐛 View Bug Reports")}`,
+          threadTs
+        );
       }
     }
   });

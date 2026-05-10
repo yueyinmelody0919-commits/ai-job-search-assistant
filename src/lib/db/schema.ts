@@ -172,6 +172,24 @@ export const whitelist = sqliteTable("whitelist", {
     .default(sql`(datetime('now'))`),
 });
 
+// ─── Bug Reports ─────────────────────────────────────────────────
+export const bugs = sqliteTable("bugs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  reportedBy: text("reported_by").notNull(), // agent name
+  severity: text("severity").notNull().default("medium"), // 'low' | 'medium' | 'high' | 'critical'
+  status: text("status").notNull().default("open"), // 'open' | 'in_progress' | 'fixed' | 'wont_fix'
+  errorMessage: text("error_message"),
+  stackTrace: text("stack_trace"),
+  context: text("context"), // JSON: what the agent was doing when the bug occurred
+  fixPrompt: text("fix_prompt").notNull(), // Claude-focused prompt for fixing the bug
+  fixedAt: text("fixed_at"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 // ─── Meme Log ────────────────────────────────────────────────────
 export const memeLog = sqliteTable("meme_log", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -196,3 +214,5 @@ export type AgentLog = typeof agentLogs.$inferSelect;
 export type Feature = typeof features.$inferSelect;
 export type Skill = typeof skills.$inferSelect;
 export type WhitelistEntry = typeof whitelist.$inferSelect;
+export type BugReport = typeof bugs.$inferSelect;
+export type NewBugReport = typeof bugs.$inferInsert;

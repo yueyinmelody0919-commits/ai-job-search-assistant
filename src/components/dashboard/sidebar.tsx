@@ -11,6 +11,7 @@ import {
   Network,
   Settings,
   GraduationCap,
+  Bug,
   Zap,
 } from "lucide-react";
 
@@ -20,6 +21,7 @@ const navigation = [
   { name: "Pipeline", href: "/pipeline", icon: Kanban },
   { name: "Agents", href: "/agents", icon: Bot },
   { name: "Network", href: "/network", icon: Network },
+  { name: "Bugs", href: "/bugs", icon: Bug },
   { name: "Learning", href: "/learning", icon: GraduationCap },
   { name: "Preferences", href: "/preferences", icon: Settings },
 ];
