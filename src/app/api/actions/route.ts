@@ -184,6 +184,20 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      case "test_email": {
+        const to = params.to || "yueyin.melody0919@gmail.com";
+        const subject = `Test Email — AI Colleague Team — ${new Date().toLocaleString("en-US", { timeZone: "America/New_York" })}`;
+        const emailBody = `Hi Melody,\n\nThis is a test email from your AI Colleague Team dashboard.\n\nIf you're reading this, Gmail integration is working correctly.\n\nJob referenced: ${j.title} at ${j.company}\n\nBest,\nJim (Strategist Agent)`;
+
+        const sent = await sendEmail(to, subject, emailBody);
+
+        await logAgentAction("strategist", "test_email", {
+          jobId, to, threadId: sent.threadId,
+        });
+
+        return NextResponse.json({ action: "test_email", sent, to });
+      }
+
       default:
         return NextResponse.json(
           { error: `Unknown action: ${action}` },

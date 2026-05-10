@@ -19,6 +19,23 @@ export async function GET(request: NextRequest) {
   const offset = parseInt(searchParams.get("offset") || "0");
 
   try {
+    // Single job detail with full score breakdown
+    const jobId = searchParams.get("id");
+    if (jobId) {
+      const job = await db.select().from(schema.jobs).where(eq(schema.jobs.id, parseInt(jobId))).limit(1);
+      if (!job[0]) return NextResponse.json({ error: "Job not found" }, { status: 404 });
+
+      const scores = await db.select().from(schema.jobScores).where(eq(schema.jobScores.jobId, parseInt(jobId)));
+      const pipelineEntry = await db.select().from(schema.pipeline).where(eq(schema.pipeline.jobId, parseInt(jobId))).limit(1);
+
+      return NextResponse.json({
+        job: job[0],
+        scores: scores.filter((s) => s.passNumber === 2),
+        stage: pipelineEntry[0]?.stage || null,
+        overallScore: scores.find((s) => s.passNumber === 2)?.overallScore || null,
+      });
+    }
+
     // Get jobs with their latest scores and pipeline stage
     const jobsWithScores = await db
       .select({

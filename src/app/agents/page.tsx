@@ -3,11 +3,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import {
+  Loader2, ChevronLeft, Activity, Wrench, Clock, BookOpen, Database,
+} from "lucide-react";
 
-interface AgentData {
+interface AgentSummary {
   name: string;
   lastAction: { action: string; details: string | null; createdAt: string } | null;
   actionsToday: number;
@@ -15,134 +20,347 @@ interface AgentData {
   status: string;
 }
 
-interface AgentLog {
-  agent: string;
-  action: string;
-  details: string | null;
-  outcome: string | null;
-  createdAt: string;
+interface AgentDetail {
+  name: string;
+  displayName: string;
+  character: string;
+  role: string;
+  avatar: string;
+  capabilities: Array<{ name: string; enabled: boolean }>;
+  schedule: Array<{ task: string; frequency: string }>;
+  totalActions: number;
+  recentLogs: Array<{ action: string; details: string | null; outcome: string | null; createdAt: string }>;
+  learnings: Array<{ learning: string; createdAt: string }>;
+  knowledge: Array<{ title: string; category: string; createdAt: string }>;
 }
 
-const AGENT_META: Record<string, { displayName: string; character: string; role: string; avatar: string; color: string }> = {
-  scout: { displayName: "Scout", character: "Dwight Schrute", role: "Discovery & Research", avatar: "/avatars/dwight.jpg", color: "from-amber-600 to-orange-700" },
-  analyst: { displayName: "Analyst", character: "Oscar Martinez", role: "Scoring & Market Intel", avatar: "/avatars/oscar.jpg", color: "from-blue-600 to-indigo-700" },
-  strategist: { displayName: "Strategist", character: "Jim Halpert", role: "Outreach & Networking", avatar: "/avatars/jim.jpg", color: "from-green-600 to-emerald-700" },
-  ops: { displayName: "Ops", character: "Angela Martin", role: "Pipeline & Scheduling", avatar: "/avatars/angela.jpg", color: "from-rose-600 to-pink-700" },
-  engineer: { displayName: "Engineer", character: "Darryl Philbin", role: "Platform Development", avatar: "/avatars/darryl.jpg", color: "from-gray-600 to-zinc-700" },
-  coach: { displayName: "Coach", character: "Holly Flax", role: "Learning & Development", avatar: "/avatars/holly.jpg", color: "from-purple-600 to-violet-700" },
-  qa: { displayName: "QA", character: "Stanley Hudson", role: "Quality Assurance", avatar: "/avatars/stanley.jpg", color: "from-stone-600 to-neutral-700" },
+const AGENT_META: Record<string, { displayName: string; character: string; role: string; avatar: string }> = {
+  scout: { displayName: "Scout", character: "Dwight Schrute", role: "Discovery & Research", avatar: "/avatars/dwight.jpg" },
+  analyst: { displayName: "Analyst", character: "Oscar Martinez", role: "Scoring & Market Intel", avatar: "/avatars/oscar.jpg" },
+  strategist: { displayName: "Strategist", character: "Jim Halpert", role: "Outreach & Networking", avatar: "/avatars/jim.jpg" },
+  ops: { displayName: "Ops", character: "Angela Martin", role: "Pipeline & Scheduling", avatar: "/avatars/angela.jpg" },
+  engineer: { displayName: "Engineer", character: "Darryl Philbin", role: "Platform Development", avatar: "/avatars/darryl.jpg" },
+  coach: { displayName: "Coach", character: "Holly Flax", role: "Learning & Development", avatar: "/avatars/holly.jpg" },
+  qa: { displayName: "QA", character: "Stanley Hudson", role: "Quality Assurance", avatar: "/avatars/stanley.jpg" },
 };
 
 function toNYC(dateStr: string): string {
-  return new Date(dateStr).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  return new Date(dateStr).toLocaleString("en-US", {
+    timeZone: "America/New_York", month: "short", day: "numeric",
+    hour: "numeric", minute: "2-digit",
+  });
 }
 
 export default function AgentsPage() {
-  const [agents, setAgents] = useState<AgentData[]>([]);
-  const [logs, setLogs] = useState<AgentLog[]>([]);
+  const [agents, setAgents] = useState<AgentSummary[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+  const [agentDetail, setAgentDetail] = useState<AgentDetail | null>(null);
+  const [activeTab, setActiveTab] = useState<"activity" | "capabilities" | "schedule" | "knowledge">("activity");
   const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchAgents = useCallback(async () => {
     try {
       const res = await fetch("/api/agents");
       const data = await res.json();
       setAgents(data.agents || []);
-
-      // Collect all logs
-      const allLogs: AgentLog[] = [];
-      for (const agent of data.agents || []) {
-        if (agent.lastAction) allLogs.push(agent.lastAction);
-      }
-      setLogs(allLogs.sort((a: AgentLog, b: AgentLog) => b.createdAt.localeCompare(a.createdAt)));
     } catch { /* */ }
   }, []);
 
   useEffect(() => {
     let m = true;
-    fetchData().finally(() => { if (m) setLoading(false); });
+    fetchAgents().finally(() => { if (m) setLoading(false); });
     return () => { m = false; };
-  }, [fetchData]);
+  }, [fetchAgents]);
 
-  // Fetch full activity log for selected agent
-  useEffect(() => {
-    if (!selectedAgent) return;
-    fetch(`/api/agents?agent=${selectedAgent}`)
-      .then(r => r.json())
-      .then(d => {
-        // If the API returns agent-specific logs, use them
-        if (d.logs) setLogs(d.logs);
-      })
-      .catch(() => {});
-  }, [selectedAgent]);
-
-  if (loading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-white/30" /></div>;
+  async function openAgentDetail(name: string) {
+    setSelectedAgent(name);
+    setActiveTab("activity");
+    setDetailLoading(true);
+    try {
+      const res = await fetch(`/api/agents/config?agent=${name}`);
+      const data = await res.json();
+      if (data.agents?.[0]) setAgentDetail(data.agents[0]);
+    } catch { /* */ }
+    setDetailLoading(false);
   }
 
-  const filteredLogs = selectedAgent
-    ? logs.filter(l => l.agent === selectedAgent)
-    : logs;
+  if (loading) {
+    return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-dim" /></div>;
+  }
 
+  // Detail view
+  if (selectedAgent && agentDetail) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => { setSelectedAgent(null); setAgentDetail(null); }}
+            className="text-muted-foreground hover:text-foreground">
+            <ChevronLeft className="h-4 w-4 mr-1" /> Back
+          </Button>
+          <Avatar className="h-10 w-10 border border-border">
+            <AvatarImage src={agentDetail.avatar} alt={agentDetail.character} />
+            <AvatarFallback className="bg-elevated text-xs">{agentDetail.displayName[0]}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h2 className="text-sm font-semibold text-loud">{agentDetail.displayName}</h2>
+            <p className="text-xs text-muted-foreground">{agentDetail.character} — {agentDetail.role}</p>
+          </div>
+          <div className="ml-auto flex items-center gap-3">
+            <span className="text-xs text-loud font-mono">{agentDetail.totalActions} total actions</span>
+            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 border-b border-border">
+          {([
+            { id: "activity" as const, label: "Activity", icon: Activity },
+            { id: "capabilities" as const, label: "Capabilities", icon: Wrench },
+            { id: "schedule" as const, label: "Schedule", icon: Clock },
+            { id: "knowledge" as const, label: "Knowledge", icon: Database },
+          ]).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? "border-rose text-loud"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <tab.icon className="h-3.5 w-3.5" /> {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === "activity" && (
+          <Card className="bg-background border border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-loud">Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[400px]">
+                {agentDetail.recentLogs.length > 0 ? (
+                  <div className="space-y-1">
+                    {agentDetail.recentLogs.map((log, i) => (
+                      <div key={i} className="flex items-start gap-3 rounded-lg p-2.5 hover:bg-elevated transition-colors">
+                        <div className="h-1.5 w-1.5 rounded-full bg-rose mt-1.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-foreground">{log.action.replace(/_/g, " ")}</p>
+                          {log.details && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                              {typeof log.details === "string" ? log.details.slice(0, 150) : JSON.stringify(log.details).slice(0, 150)}
+                            </p>
+                          )}
+                          <p className="text-[10px] text-dim mt-0.5 font-mono">{toNYC(log.createdAt)}</p>
+                        </div>
+                        {log.outcome && (
+                          <Badge variant="outline" className={`text-[9px] shrink-0 ${
+                            log.outcome === "success" ? "border-emerald-200 text-emerald-600" : "border-destructive/20 text-destructive"
+                          }`}>
+                            {log.outcome}
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center py-8">No activity recorded yet.</p>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "capabilities" && (
+          <Card className="bg-background border border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-loud">Capabilities</CardTitle>
+              <p className="text-xs text-muted-foreground">Toggle capabilities on or off. Disabled capabilities will not be available to this agent at runtime.</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {agentDetail.capabilities.map((cap) => (
+                  <div key={cap.name} className="flex items-center justify-between rounded-lg border border-border bg-background p-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-1.5 w-1.5 rounded-full shrink-0 ${cap.enabled ? "bg-emerald-500" : "bg-dim"}`} />
+                      <span className={`text-sm ${cap.enabled ? "text-foreground" : "text-muted-foreground line-through"}`}>{cap.name}</span>
+                    </div>
+                    <Switch
+                      checked={cap.enabled}
+                      onCheckedChange={async (checked) => {
+                        // Optimistic update
+                        setAgentDetail((prev) => prev ? {
+                          ...prev,
+                          capabilities: prev.capabilities.map((c) =>
+                            c.name === cap.name ? { ...c, enabled: checked } : c
+                          ),
+                        } : prev);
+                        try {
+                          await fetch("/api/agents/config", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ agent: agentDetail.name, capability: cap.name, enabled: checked }),
+                          });
+                        } catch {
+                          // Rollback on failure
+                          setAgentDetail((prev) => prev ? {
+                            ...prev,
+                            capabilities: prev.capabilities.map((c) =>
+                              c.name === cap.name ? { ...c, enabled: !checked } : c
+                            ),
+                          } : prev);
+                        }
+                      }}
+                      className="data-[state=checked]:bg-rose"
+                    />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "schedule" && (
+          <Card className="bg-background border border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-loud">Scheduled Tasks</CardTitle>
+              <p className="text-xs text-muted-foreground">Background jobs this agent runs automatically.</p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {agentDetail.schedule.map((task) => (
+                  <div key={task.task} className="flex items-center justify-between rounded-lg border border-border bg-background p-3">
+                    <span className="text-sm text-foreground">{task.task}</span>
+                    <Badge variant="outline" className="text-[10px] shrink-0">
+                      {task.frequency}
+                    </Badge>
+                  </div>
+                ))}
+                {agentDetail.schedule.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">No scheduled tasks.</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === "knowledge" && (
+          <div className="space-y-4">
+            {/* Learnings */}
+            <Card className="bg-background border border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-loud">
+                  Learnings
+                  <span className="ml-2 text-xs font-normal text-muted-foreground font-mono">({agentDetail.learnings.length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {agentDetail.learnings.length > 0 ? (
+                  <div className="space-y-2">
+                    {agentDetail.learnings.map((l, i) => (
+                      <div key={i} className="rounded-lg border border-border bg-background p-3">
+                        <p className="text-xs text-foreground">{l.learning}</p>
+                        <p className="text-[10px] text-dim mt-1 font-mono">{toNYC(l.createdAt)}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center py-4">No learnings recorded yet.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Knowledge Base Entries */}
+            <Card className="bg-background border border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-loud">
+                  Knowledge Base
+                  <span className="ml-2 text-xs font-normal text-muted-foreground font-mono">({agentDetail.knowledge.length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {agentDetail.knowledge.length > 0 ? (
+                  <div className="space-y-2">
+                    {agentDetail.knowledge.map((k, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-lg border border-border bg-background p-3">
+                        <div>
+                          <p className="text-xs text-foreground">{k.title}</p>
+                          <p className="text-[10px] text-dim mt-0.5 font-mono">{toNYC(k.createdAt)}</p>
+                        </div>
+                        <Badge variant="outline" className="text-[9px] shrink-0">{k.category}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center py-4">No knowledge entries yet.</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Grid view
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white">Agent Orchestration</h2>
-        <Badge variant="outline" className="border-green-500/30 text-green-400 text-xs">
+        <h2 className="text-sm font-semibold text-loud">Agent Orchestration</h2>
+        <Badge variant="outline" className="border-emerald-200 text-emerald-600 text-xs">
           {agents.filter(a => a.status === "active").length} active
         </Badge>
       </div>
 
-      {/* Agent Cards */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {agents.map((agent) => {
           const meta = AGENT_META[agent.name];
           if (!meta) return null;
-          const isSelected = selectedAgent === agent.name;
 
           return (
             <Card
               key={agent.name}
-              className={`border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden cursor-pointer transition-all hover:border-white/20 ${isSelected ? "ring-1 ring-blue-500/50 border-blue-500/30" : ""}`}
-              onClick={() => setSelectedAgent(isSelected ? null : agent.name)}
+              className="bg-background border border-border overflow-hidden cursor-pointer transition-colors hover:bg-elevated"
+              onClick={() => openAgentDetail(agent.name)}
             >
-              <div className={`h-1 bg-gradient-to-r ${meta.color}`} />
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10 border border-white/10">
+                  <Avatar className="h-10 w-10 border border-border">
                     <AvatarImage src={meta.avatar} alt={meta.character} />
-                    <AvatarFallback className="bg-white/10 text-white/50 text-xs">
+                    <AvatarFallback className="bg-elevated text-muted-foreground text-xs">
                       {meta.displayName[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-white">{meta.displayName}</span>
-                      <div className={`h-2 w-2 rounded-full ${agent.status === "active" ? "bg-green-400 animate-pulse" : "bg-white/20"}`} />
+                      <span className="text-sm font-medium text-loud">{meta.displayName}</span>
+                      <div className={`h-1.5 w-1.5 rounded-full ${agent.status === "active" ? "bg-emerald-500" : "bg-dim"}`} />
                     </div>
-                    <p className="text-[10px] text-white/40">{meta.character} — {meta.role}</p>
+                    <p className="text-[10px] text-muted-foreground">{meta.character} — {meta.role}</p>
                   </div>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="flex gap-3">
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-white">{agent.actionsToday}</p>
-                      <p className="text-[9px] text-white/30">today</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-white">{agent.totalLearnings}</p>
-                      <p className="text-[9px] text-white/30">learnings</p>
-                    </div>
+                <div className="mt-3 flex items-center gap-4">
+                  <div>
+                    <p className="text-lg font-bold text-loud font-mono">{agent.actionsToday}</p>
+                    <p className="text-[9px] text-dim">today</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-loud font-mono">{agent.totalLearnings}</p>
+                    <p className="text-[9px] text-dim">learnings</p>
                   </div>
                 </div>
 
                 {agent.lastAction && (
-                  <div className="mt-3 rounded-lg bg-white/[0.03] border border-white/5 p-2">
-                    <p className="text-[11px] text-white/50 truncate">
+                  <div className="mt-3 rounded-md bg-elevated border border-border p-2">
+                    <p className="text-[11px] text-muted-foreground truncate">
                       {agent.lastAction.action.replace(/_/g, " ")}
                     </p>
-                    <p className="text-[9px] text-white/25 mt-0.5">
+                    <p className="text-[9px] text-dim mt-0.5 font-mono">
                       {toNYC(agent.lastAction.createdAt)}
                     </p>
                   </div>
@@ -153,67 +371,11 @@ export default function AgentsPage() {
         })}
       </div>
 
-      {/* Activity Log */}
-      <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm text-white">
-              {selectedAgent ? `${AGENT_META[selectedAgent]?.displayName} Activity Log` : "All Agent Activity"}
-            </CardTitle>
-            {selectedAgent && (
-              <Badge
-                variant="outline"
-                className="text-[10px] border-white/10 text-white/40 cursor-pointer hover:text-white/60"
-                onClick={() => setSelectedAgent(null)}
-              >
-                Show all
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[300px]">
-            {filteredLogs.length > 0 ? (
-              <div className="space-y-2">
-                {filteredLogs.map((log, i) => {
-                  const meta = AGENT_META[log.agent];
-                  return (
-                    <div key={i} className="flex items-start gap-3 rounded-lg p-2 hover:bg-white/[0.03] transition-colors">
-                      <Avatar className="h-6 w-6 mt-0.5 border border-white/10">
-                        <AvatarImage src={meta?.avatar} />
-                        <AvatarFallback className="bg-white/10 text-[9px]">{log.agent[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-white/80">
-                          <span className="font-medium text-white">{meta?.displayName || log.agent}</span>{" "}
-                          {log.action.replace(/_/g, " ")}
-                        </p>
-                        {log.details && (
-                          <p className="text-[10px] text-white/30 mt-0.5 truncate">
-                            {typeof log.details === "string" ? log.details.slice(0, 120) : JSON.stringify(log.details).slice(0, 120)}
-                          </p>
-                        )}
-                        <p className="text-[9px] text-white/20 mt-0.5">
-                          {toNYC(log.createdAt)}
-                        </p>
-                      </div>
-                      {log.outcome && (
-                        <Badge variant="outline" className={`text-[9px] ${log.outcome === "success" ? "border-green-500/20 text-green-400/60" : "border-red-500/20 text-red-400/60"}`}>
-                          {log.outcome}
-                        </Badge>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-xs text-white/30 text-center py-8">
-                No activity yet. Interact with agents in Slack to see logs here.
-              </p>
-            )}
-          </ScrollArea>
-        </CardContent>
-      </Card>
+      {detailLoading && (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-5 w-5 animate-spin text-dim" />
+        </div>
+      )}
     </div>
   );
 }

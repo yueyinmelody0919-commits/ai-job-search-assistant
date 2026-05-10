@@ -201,6 +201,17 @@ export const memeLog = sqliteTable("meme_log", {
     .default(sql`(datetime('now'))`),
 });
 
+// ─── Agent Configs (runtime capability overrides) ───────────────
+export const agentConfigs = sqliteTable("agent_configs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  agent: text("agent").notNull(),
+  capability: text("capability").notNull(),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 // ─── Type Exports ────────────────────────────────────────────────
 export type Job = typeof jobs.$inferSelect;
 export type NewJob = typeof jobs.$inferInsert;
@@ -216,3 +227,4 @@ export type Skill = typeof skills.$inferSelect;
 export type WhitelistEntry = typeof whitelist.$inferSelect;
 export type BugReport = typeof bugs.$inferSelect;
 export type NewBugReport = typeof bugs.$inferInsert;
+export type AgentConfigEntry = typeof agentConfigs.$inferSelect;

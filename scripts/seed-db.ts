@@ -42,6 +42,31 @@ async function main() {
     console.log(`  — Whitelist already has ${existingWhitelist.length} entries`);
   }
 
+  // Seed agent configs (all capabilities enabled by default)
+  const AGENT_CAPABILITIES: Record<string, string[]> = {
+    scout: ["Search JSearch API", "Search Adzuna API", "Discover jobs", "Research companies via Tavily"],
+    analyst: ["Score jobs via Claude API", "Update Thompson Sampling weights", "Process feedback"],
+    strategist: ["Draft emails via Claude API", "Send emails via Gmail API", "Look up contacts via Apollo"],
+    ops: ["Manage pipeline stages", "Create Google Calendar events", "Update Google Sheets tracker"],
+    engineer: ["Manage whitelist", "Suggest features", "Monitor agent performance"],
+    coach: ["Recommend learning resources", "Identify skill gaps", "Search courses via Tavily"],
+    qa: ["Investigate bugs", "Monitor test results", "Track error logs"],
+  };
+
+  const existingConfigs = await db.select().from(schema.agentConfigs);
+  if (existingConfigs.length === 0) {
+    let count = 0;
+    for (const [agent, capabilities] of Object.entries(AGENT_CAPABILITIES)) {
+      for (const capability of capabilities) {
+        await db.insert(schema.agentConfigs).values({ agent, capability, enabled: true });
+        count++;
+      }
+    }
+    console.log(`  ✓ Seeded ${count} agent config entries`);
+  } else {
+    console.log(`  — Agent configs already seeded (${existingConfigs.length} entries)`);
+  }
+
   console.log("\nDone.");
 }
 

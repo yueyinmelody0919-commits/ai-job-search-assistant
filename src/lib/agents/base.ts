@@ -9,6 +9,8 @@ import { logAgentAction, storeKnowledge, storeAgentLearning } from "../memory/st
 import type { KnowledgeCategory } from "../memory/store";
 import { fileBug } from "./bugs";
 import { loadAgentContext } from "./context";
+import { db, schema } from "../db";
+import { eq } from "drizzle-orm";
 
 export interface AgentConfig {
   name: string;
@@ -41,6 +43,28 @@ export class BaseAgent {
   }
 
   /**
+   * Load enabled capabilities from DB (respects runtime toggles).
+   */
+  async getEnabledCapabilities(): Promise<string[]> {
+    const baseCaps = AGENT_CAPABILITIES[this.config.name] || [];
+    try {
+      const overrides = await db
+        .select()
+        .from(schema.agentConfigs)
+        .where(eq(schema.agentConfigs.agent, this.config.name));
+
+      if (overrides.length === 0) return baseCaps;
+
+      const disabledSet = new Set(
+        overrides.filter((o) => !o.enabled).map((o) => o.capability.toLowerCase())
+      );
+      return baseCaps.filter((cap) => !disabledSet.has(cap.toLowerCase()));
+    } catch {
+      return baseCaps;
+    }
+  }
+
+  /**
    * Respond to a user message with the agent's persona.
    * Files a bug report if Claude API fails.
    */
@@ -50,8 +74,8 @@ export class BaseAgent {
   ): Promise<string> {
     const history = this.conversationHistory.get(channelId || "default") || [];
 
-    // Load fresh context from the database
-    const capabilities = AGENT_CAPABILITIES[this.config.name] || [];
+    // Load enabled capabilities (respects runtime toggles)
+    const capabilities = await this.getEnabledCapabilities();
     const capabilityNote = `\n\nYour capabilities: ${capabilities.join(", ")}. If a user asks you to do something outside your capabilities, tell them which colleague can help. If you encounter an error, tell the user you've logged a bug report.`;
 
     let freshContext = "";
@@ -115,7 +139,7 @@ export class BaseAgent {
       context: {
         agent: this.config.name,
         role: this.config.role,
-        capabilities: AGENT_CAPABILITIES[this.config.name],
+        capabilities: AGENT_CAPABILITIES[this.config.name], // use static list for bug context
         ...context,
       },
     });

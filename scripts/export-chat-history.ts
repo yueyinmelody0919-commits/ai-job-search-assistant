@@ -108,6 +108,7 @@ const SECTIONS: Array<{ pattern: RegExp; title: string; phase: string }> = [
   { pattern: /focus more on content/i, title: "Content-Focused Dashboard", phase: "Enhancement" },
   { pattern: /agent page.*see and modify/i, title: "Agent Settings & Configuration", phase: "Enhancement" },
   { pattern: /can you access our full chat history/i, title: "Complete Chat History Export", phase: "Documentation" },
+  { pattern: /conduct a review of this convo/i, title: "Review & Outstanding Issues", phase: "Review" },
 ];
 
 function main() {
@@ -149,7 +150,10 @@ function main() {
   md.push("# Complete Chat History — Melody's AI Colleague Team");
   md.push("");
   md.push("> Full conversation log from the build session of the Leena AI interview assignment.");
-  md.push(`> **Date**: May 9, 2026 | **Messages**: ${messages.length} | **User prompts**: ${messages.filter(m => m.role === "user").length}`);
+  const firstTS = messages.find(m => m.ts)?.ts;
+  const lastTS = [...messages].reverse().find(m => m.ts)?.ts;
+  const dateRange = firstTS && lastTS ? `${formatTS(firstTS)} — ${formatTS(lastTS)}` : "May 9, 2026";
+  md.push(`> **Date**: ${dateRange} | **Messages**: ${messages.length} | **User prompts**: ${messages.filter(m => m.role === "user").length}`);
   md.push(`> **Project**: Multi-agent Job Search Assistant — 7 AI colleagues with The Office personas`);
   md.push("");
   md.push("---");
@@ -202,12 +206,16 @@ function main() {
       md.push("");
     } else {
       const preview = msg.text.slice(0, 120).replace(/\n/g, " ").replace(/[#*`]/g, "").trim();
+      // Find the longest run of backticks in the content to use a longer fence
+      const backtickRuns = msg.text.match(/`{3,}/g) || [];
+      const maxTicks = backtickRuns.reduce((max, run) => Math.max(max, run.length), 2);
+      const fence = "`".repeat(maxTicks + 1);
       md.push(`<details>`);
       md.push(`<summary>🤖 <strong>Claude</strong>${tsLabel} — <em>${preview}...</em></summary>`);
       md.push("");
-      md.push("```");
+      md.push(fence);
       md.push(msg.text);
-      md.push("```");
+      md.push(fence);
       md.push("");
       md.push(`</details>`);
       md.push("");

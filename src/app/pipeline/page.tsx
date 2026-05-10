@@ -14,14 +14,20 @@ interface PipelineEntry {
 }
 
 const STAGES = [
-  { id: "discovered", label: "Discovered", color: "bg-gray-500" },
-  { id: "queued", label: "Queued", color: "bg-blue-500" },
-  { id: "outreached", label: "Outreached", color: "bg-purple-500" },
-  { id: "applied", label: "Applied", color: "bg-amber-500" },
-  { id: "interviewing", label: "Interviewing", color: "bg-green-500" },
-  { id: "offer", label: "Offer", color: "bg-emerald-500" },
-  { id: "passed", label: "Passed", color: "bg-red-500" },
+  { id: "discovered", label: "Discovered", color: "bg-zinc-400" },
+  { id: "queued", label: "Queued", color: "bg-blue-400" },
+  { id: "outreached", label: "Outreached", color: "bg-violet-400" },
+  { id: "applied", label: "Applied", color: "bg-amber-400" },
+  { id: "interviewing", label: "Interviewing", color: "bg-emerald-500" },
+  { id: "offer", label: "Offer", color: "bg-teal-400" },
+  { id: "passed", label: "Passed", color: "bg-rose" },
 ];
+
+function toNYC(dateStr: string): string {
+  return new Date(dateStr).toLocaleString("en-US", {
+    timeZone: "America/New_York", month: "short", day: "numeric",
+  });
+}
 
 export default function PipelinePage() {
   const [stages, setStages] = useState<PipelineStage[]>([]);
@@ -64,7 +70,7 @@ export default function PipelinePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-white/30" />
+        <Loader2 className="h-6 w-6 animate-spin text-dim" />
       </div>
     );
   }
@@ -73,9 +79,9 @@ export default function PipelinePage() {
     <div className="space-y-6">
       {/* Sankey Diagram */}
       {entries.length > 0 && (
-        <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
+        <Card className="bg-background border border-border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-white">Pipeline Flow</CardTitle>
+            <CardTitle className="text-sm text-loud">Pipeline Flow</CardTitle>
           </CardHeader>
           <CardContent>
             <PipelineSankey data={sankeyData} />
@@ -87,12 +93,12 @@ export default function PipelinePage() {
       <div className="flex gap-2 overflow-x-auto pb-2">
         {STAGES.map((stage) => (
           <div key={stage.id}
-            className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 min-w-fit">
+            className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 min-w-fit">
             <div className={`h-2 w-2 rounded-full ${stage.color}`} />
-            <span className="text-xs text-white/60">{stage.label}</span>
-            <Badge variant="outline" className="text-[10px] border-white/20 text-white/50">
+            <span className="text-xs text-muted-foreground">{stage.label}</span>
+            <span className="text-xs font-mono text-loud">
               {getStageCount(stage.id)}
-            </Badge>
+            </span>
           </div>
         ))}
       </div>
@@ -104,30 +110,30 @@ export default function PipelinePage() {
           return (
             <div key={stage.id} className="min-w-[240px] flex-shrink-0">
               <div className="flex items-center gap-2 mb-3 px-1">
-                <div className={`h-2.5 w-2.5 rounded-full ${stage.color}`} />
-                <h3 className="text-sm font-medium text-white/70">{stage.label}</h3>
-                <Badge variant="outline" className="text-[10px] border-white/10 text-white/40 ml-auto">
+                <div className={`h-2 w-2 rounded-full ${stage.color}`} />
+                <h3 className="text-sm font-medium text-loud">{stage.label}</h3>
+                <span className="text-xs font-mono text-muted-foreground ml-auto">
                   {stageEntries.length}
-                </Badge>
+                </span>
               </div>
 
               <ScrollArea className="h-[calc(100vh-380px)]">
                 <div className="space-y-2">
                   {stageEntries.map((entry) => (
                     <Card key={entry.pipeline.id}
-                      className="border-white/10 bg-white/5 backdrop-blur-sm cursor-pointer transition-all hover:bg-white/[0.08]">
+                      className="bg-background border border-border cursor-pointer transition-colors hover:bg-elevated">
                       <CardContent className="p-3">
-                        <p className="text-sm font-medium text-white truncate">{entry.job.title}</p>
-                        <p className="text-xs text-white/50 mt-0.5">{entry.job.company}</p>
-                        <p className="text-[10px] text-white/30 mt-2">
-                          {new Date(entry.pipeline.updatedAt).toLocaleDateString()}
+                        <p className="text-sm font-medium text-loud truncate">{entry.job.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{entry.job.company}</p>
+                        <p className="text-[10px] text-muted-foreground mt-2 font-mono">
+                          {toNYC(entry.pipeline.updatedAt)}
                         </p>
                       </CardContent>
                     </Card>
                   ))}
                   {stageEntries.length === 0 && (
-                    <div className="flex items-center justify-center h-20 rounded-lg border border-dashed border-white/10">
-                      <p className="text-xs text-white/20">No jobs</p>
+                    <div className="flex items-center justify-center h-20 rounded-lg border border-dashed border-border">
+                      <p className="text-xs text-dim">No jobs</p>
                     </div>
                   )}
                 </div>

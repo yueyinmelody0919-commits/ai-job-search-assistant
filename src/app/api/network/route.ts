@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchPeople, enrichCompany, findWarmIntros } from "@/lib/integrations/apollo";
 import { db, schema } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { logAgentAction } from "@/lib/memory/store";
 
 export async function GET(request: NextRequest) {
@@ -69,9 +69,69 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { domain } = await request.json();
+    const body = await request.json();
+
+    // Batch population from high-scored jobs
+    if (body.action === "batch_from_jobs") {
+      const minScore = body.minScore || 80;
+      const limit = body.limit || 10;
+
+      // Get unique companies from jobs with high scores
+      const topJobs = await db
+        .select({ company: schema.jobs.company })
+        .from(schema.jobs)
+        .innerJoin(schema.jobScores, eq(schema.jobScores.jobId, schema.jobs.id))
+        .where(sql`${schema.jobScores.overallScore} >= ${minScore} AND ${schema.jobScores.passNumber} = 2`)
+        .groupBy(schema.jobs.company)
+        .limit(limit);
+
+      const results: Array<{ company: string; status: string; count?: number }> = [];
+
+      for (const { company } of topJobs) {
+        if (!company) continue;
+
+        // Skip if contacts already exist
+        const existing = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.contacts)
+          .where(eq(schema.contacts.company, company));
+
+        if ((existing[0]?.count ?? 0) > 0) {
+          results.push({ company, status: "cached" });
+          continue;
+        }
+
+        try {
+          const contacts = await findWarmIntros(company);
+          for (const contact of contacts) {
+            await db.insert(schema.contacts).values({
+              name: contact.name,
+              company: contact.company || company,
+              title: contact.title,
+              email: contact.email,
+              linkedinUrl: contact.linkedinUrl,
+              source: "apollo",
+              relationship: "cold",
+            });
+          }
+          results.push({ company, status: "found", count: contacts.length });
+        } catch {
+          results.push({ company, status: "failed" });
+        }
+      }
+
+      await logAgentAction("strategist", "batch_network_lookup", {
+        companiesProcessed: results.length,
+        contactsFound: results.filter((r) => r.status === "found").reduce((s, r) => s + (r.count || 0), 0),
+      });
+
+      return NextResponse.json({ action: "batch_from_jobs", results });
+    }
+
+    // Single company enrichment by domain
+    const { domain } = body;
     if (!domain) {
-      return NextResponse.json({ error: "domain required" }, { status: 400 });
+      return NextResponse.json({ error: "domain or action required" }, { status: 400 });
     }
 
     const companyData = await enrichCompany(domain);

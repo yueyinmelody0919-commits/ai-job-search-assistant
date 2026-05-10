@@ -27,7 +27,6 @@ export default function NetworkPage() {
   const [companies, setCompanies] = useState<CompanyContacts[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load saved contacts on mount
   useEffect(() => {
     fetch("/api/network")
       .then(r => r.json())
@@ -56,9 +55,7 @@ export default function NetworkPage() {
           return [...prev, { company: searchQuery, contacts: data.contacts }];
         });
       }
-    } catch {
-      // Silently fail, keep demo data
-    }
+    } catch { /* */ }
     setLoading(false);
     setSearchQuery("");
   }
@@ -66,65 +63,92 @@ export default function NetworkPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white">Network Map</h2>
-        <Badge variant="outline" className="border-white/20 text-white/50 text-xs">
-          <Users className="h-3 w-3 mr-1" />
+        <h2 className="text-sm font-semibold text-loud">Network Map</h2>
+        <span className="text-xs text-muted-foreground font-mono">
+          <Users className="h-3 w-3 inline mr-1" />
           {companies.reduce((sum, c) => sum + c.contacts.length, 0)} contacts
-        </Badge>
+        </span>
       </div>
 
       {/* Company lookup */}
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+          <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-dim" />
           <Input
             placeholder="Look up contacts at a company (e.g., Figma)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && lookupCompany()}
-            className="pl-10 border-white/10 bg-white/5 text-white placeholder:text-white/30"
+            className="pl-10"
           />
         </div>
-        <Button onClick={lookupCompany} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={lookupCompany} disabled={loading} className="bg-rose text-primary-foreground hover:bg-rose/90">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+        </Button>
+        <Button variant="outline" disabled={loading} onClick={async () => {
+          setLoading(true);
+          try {
+            const res = await fetch("/api/network", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "batch_from_jobs", minScore: 80 }),
+            });
+            const data = await res.json();
+            const found = data.results?.filter((r: { status: string }) => r.status === "found").length || 0;
+            if (found > 0) {
+              // Refresh contacts
+              const refresh = await fetch("/api/network");
+              const refreshData = await refresh.json();
+              if (refreshData.contacts && typeof refreshData.contacts === "object") {
+                const loaded = Object.entries(refreshData.contacts).map(([company, contacts]) => ({
+                  company, contacts: contacts as Contact[],
+                }));
+                setCompanies(loaded);
+              }
+            }
+            alert(`Populated ${found} companies from top-scored jobs`);
+          } catch { alert("Batch population failed"); }
+          setLoading(false);
+        }}>
+          Populate from Top Jobs
         </Button>
       </div>
 
       {/* Company cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {companies.map((company) => (
-          <Card key={company.company} className="border-white/10 bg-white/5 backdrop-blur-sm">
+          <Card key={company.company} className="bg-background border border-border">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm text-white">{company.company}</CardTitle>
-                <Badge variant="outline" className="text-[10px] border-white/10 text-white/40">
+                <CardTitle className="text-sm text-loud">{company.company}</CardTitle>
+                <span className="text-[10px] text-muted-foreground font-mono">
                   {company.contacts.length} contacts
-                </Badge>
+                </span>
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
               {company.contacts.map((contact) => (
-                <div key={contact.name} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-3 transition-colors hover:bg-white/[0.05]">
+                <div key={contact.name} className="flex items-center justify-between rounded-lg border border-border bg-background p-3 transition-colors hover:bg-elevated">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white truncate">{contact.name}</p>
-                    <p className="text-xs text-white/40 truncate">{contact.title}</p>
+                    <p className="text-sm text-loud truncate">{contact.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{contact.title}</p>
                   </div>
                   <div className="flex gap-1 ml-2">
                     {contact.email && (
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-white/30 hover:text-blue-400"
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-dim hover:text-rose"
                         title={`Email ${contact.name}`}>
                         <Mail className="h-3.5 w-3.5" />
                       </Button>
                     )}
                     {contact.linkedinUrl && (
                       <a href={contact.linkedinUrl} target="_blank" rel="noopener noreferrer">
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-white/30 hover:text-blue-400"
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-dim hover:text-rose"
                           title="View LinkedIn">
                           <Link2 className="h-3.5 w-3.5" />
                         </Button>
                       </a>
                     )}
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-white/30 hover:text-green-400"
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-dim hover:text-emerald-600"
                       title="Draft intro email">
                       <ExternalLink className="h-3.5 w-3.5" />
                     </Button>

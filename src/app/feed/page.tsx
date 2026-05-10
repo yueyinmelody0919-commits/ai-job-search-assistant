@@ -1,17 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScoreRadar } from "@/components/charts/score-radar";
 import {
   Search, ThumbsUp, ThumbsDown, Send, CalendarPlus,
-  ExternalLink, MapPin, Building2, DollarSign, Users,
-  Sparkles, Loader2,
+  ExternalLink, MapPin, Building2, DollarSign,
+  ChevronDown, ChevronUp, Loader2,
 } from "lucide-react";
 
 interface JobEntry {
@@ -31,19 +33,19 @@ interface ScoreDetail {
 }
 
 function getScoreColor(score: number) {
-  if (score >= 90) return "text-green-400 bg-green-500/20 border-green-500/30";
-  if (score >= 80) return "text-blue-400 bg-blue-500/20 border-blue-500/30";
-  if (score >= 70) return "text-amber-400 bg-amber-500/20 border-amber-500/30";
-  return "text-white/40 bg-white/10 border-white/10";
+  if (score >= 90) return "text-emerald-700 bg-emerald-50 border-emerald-200";
+  if (score >= 80) return "text-blue-700 bg-blue-50 border-blue-200";
+  if (score >= 70) return "text-amber-700 bg-amber-50 border-amber-200";
+  return "text-muted-foreground bg-surface border-border";
 }
 
 function getStageColor(stage: string) {
   const colors: Record<string, string> = {
-    discovered: "bg-gray-500/20 text-gray-300 border-gray-500/30",
-    queued: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-    outreached: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-    applied: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-    interviewing: "bg-green-500/20 text-green-300 border-green-500/30",
+    discovered: "bg-muted text-muted-foreground border-border",
+    queued: "bg-blue-50 text-blue-700 border-blue-200",
+    outreached: "bg-violet-50 text-violet-700 border-violet-200",
+    applied: "bg-amber-50 text-amber-700 border-amber-200",
+    interviewing: "bg-emerald-50 text-emerald-700 border-emerald-200",
   };
   return colors[stage] || colors.discovered;
 }
@@ -56,15 +58,25 @@ const dimensionLabels: Record<string, string> = {
   growth_trajectory: "Growth Trajectory",
 };
 
-export default function JobFeed() {
+export default function JobFeedPage() {
+  return (
+    <Suspense>
+      <JobFeed />
+    </Suspense>
+  );
+}
+
+function JobFeed() {
   const [jobs, setJobs] = useState<JobEntry[]>([]);
   const [selectedJob, setSelectedJob] = useState<JobEntry | null>(null);
-  const [selectedScores] = useState<ScoreDetail[]>([]);
+  const [selectedScores, setSelectedScores] = useState<ScoreDetail[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [draftingEmail, setDraftingEmail] = useState(false);
   const [draftedEmail, setDraftedEmail] = useState<{ subject: string; body: string } | null>(null);
   const [feedbackComment, setFeedbackComment] = useState("");
+  const [descExpanded, setDescExpanded] = useState(false);
+  const searchParams = useSearchParams();
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -76,17 +88,40 @@ export default function JobFeed() {
 
   useEffect(() => {
     let mounted = true;
-    fetchJobs().finally(() => { if (mounted) setLoading(false); });
+    fetchJobs().finally(() => {
+      if (mounted) setLoading(false);
+    });
     return () => { mounted = false; };
   }, [fetchJobs]);
+
+  // Auto-open dossier from Morning Brief navigation
+  useEffect(() => {
+    const jobId = searchParams.get("jobId");
+    if (jobId && jobs.length > 0) {
+      const entry = jobs.find((j) => j.job.id === parseInt(jobId));
+      if (entry) openDossier(entry);
+    }
+  }, [searchParams, jobs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function openDossier(entry: JobEntry) {
     setSelectedJob(entry);
     setDraftedEmail(null);
-    // Fetch score details
+    setSelectedScores([]);
+    setDescExpanded(false);
     try {
-      const res = await fetch(`/api/jobs?limit=1`); // We'll use the score data from the job
-      // For now use what we have
+      const res = await fetch(`/api/jobs?id=${entry.job.id}`);
+      const data = await res.json();
+      if (data.scores) {
+        setSelectedScores(data.scores.map((s: { dimension: string; score: number; reason: string }) => ({
+          dimension: s.dimension,
+          score: s.score,
+          reason: s.reason || "",
+        })));
+      }
+      // Update job with full description if available
+      if (data.job?.description && !entry.job.description) {
+        setSelectedJob({ ...entry, job: { ...entry.job, description: data.job.description } });
+      }
     } catch { /* */ }
   }
 
@@ -111,9 +146,7 @@ export default function JobFeed() {
         body: JSON.stringify({ action: "draft_email", jobId }),
       });
       const data = await res.json();
-      if (data.email) {
-        setDraftedEmail(data.email);
-      }
+      if (data.email) setDraftedEmail(data.email);
     } catch {
       alert("Email drafting failed — check ANTHROPIC_API_KEY");
     }
@@ -149,43 +182,43 @@ export default function JobFeed() {
       {/* Search */}
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-dim" />
           <Input placeholder="Search jobs, companies..." value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 border-white/10 bg-white/5 text-white placeholder:text-white/30" />
+            className="pl-10" />
         </div>
-        <Badge variant="outline" className="border-white/10 text-white/40 text-xs">
+        <span className="text-xs text-muted-foreground font-mono">
           {filteredJobs.length} jobs
-        </Badge>
+        </span>
       </div>
 
       {/* Job Cards */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-white/30" />
+          <Loader2 className="h-6 w-6 animate-spin text-dim" />
         </div>
       ) : filteredJobs.length === 0 ? (
-        <Card className="border-white/10 bg-white/5">
+        <Card className="bg-background border border-border">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <Search className="h-8 w-8 text-white/20 mb-3" />
-            <p className="text-sm text-white/40">No jobs found. Go to the Morning Brief and click &quot;Scan for Jobs&quot;.</p>
+            <Search className="h-8 w-8 text-dim mb-3" />
+            <p className="text-sm text-muted-foreground">No jobs found. Go to the Morning Brief and click &quot;Scan for Jobs&quot;.</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {filteredJobs.map((entry) => (
             <Card key={entry.job.id}
-              className="border-white/10 bg-white/5 backdrop-blur-sm cursor-pointer transition-all hover:bg-white/[0.07] hover:border-white/20"
+              className="bg-background border border-border cursor-pointer transition-colors hover:bg-elevated"
               onClick={() => openDossier(entry)}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 flex-1">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl border ${getScoreColor(entry.overallScore || 0)}`}>
-                      <span className="text-lg font-bold">{entry.overallScore || "—"}</span>
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-lg border font-mono text-sm font-bold ${getScoreColor(entry.overallScore || 0)}`}>
+                      {entry.overallScore || "—"}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-semibold text-white truncate">{entry.job.title}</h3>
+                        <h3 className="text-sm font-medium text-loud truncate">{entry.job.title}</h3>
                         {entry.stage && (
                           <Badge variant="outline" className={`text-[10px] ${getStageColor(entry.stage)}`}>
                             {entry.stage}
@@ -193,27 +226,27 @@ export default function JobFeed() {
                         )}
                       </div>
                       <div className="flex items-center gap-3 mt-1">
-                        <span className="flex items-center gap-1 text-xs text-white/50">
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Building2 className="h-3 w-3" /> {entry.job.company}
                         </span>
-                        <span className="flex items-center gap-1 text-xs text-white/50">
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
                           <MapPin className="h-3 w-3" /> {entry.job.location || "—"}
                         </span>
                         {entry.job.salaryMin && (
-                          <span className="flex items-center gap-1 text-xs text-white/50">
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
                             <DollarSign className="h-3 w-3" />
-                            ${(entry.job.salaryMin / 1000).toFixed(0)}K{entry.job.salaryMax ? ` - $${(entry.job.salaryMax / 1000).toFixed(0)}K` : ""}
+                            {(entry.job.salaryMin / 1000).toFixed(0)}K{entry.job.salaryMax ? `–${(entry.job.salaryMax / 1000).toFixed(0)}K` : ""}
                           </span>
                         )}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button size="sm" variant="ghost" className="h-8 text-green-400/60 hover:text-green-400 hover:bg-green-500/10"
+                    <Button size="sm" variant="ghost" className="h-8 text-dim hover:text-emerald-600 hover:bg-emerald-50"
                       onClick={(e) => { e.stopPropagation(); handleFeedback(entry.job.id, "thumbs_up"); }}>
                       <ThumbsUp className="h-3.5 w-3.5" />
                     </Button>
-                    <Button size="sm" variant="ghost" className="h-8 text-red-400/40 hover:text-red-400 hover:bg-red-500/10"
+                    <Button size="sm" variant="ghost" className="h-8 text-dim hover:text-destructive hover:bg-destructive/10"
                       onClick={(e) => { e.stopPropagation(); handleFeedback(entry.job.id, "thumbs_down"); }}>
                       <ThumbsDown className="h-3.5 w-3.5" />
                     </Button>
@@ -227,17 +260,17 @@ export default function JobFeed() {
 
       {/* Company Dossier */}
       <Sheet open={!!selectedJob} onOpenChange={(open) => !open && setSelectedJob(null)}>
-        <SheetContent className="w-[500px] sm:w-[600px] border-white/10 bg-black/95 backdrop-blur-xl overflow-y-auto">
+        <SheetContent className="w-[500px] sm:w-[600px] border-border bg-background overflow-y-auto">
           {selectedJob && (
             <>
               <SheetHeader>
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-14 w-14 items-center justify-center rounded-xl border ${getScoreColor(selectedJob.overallScore || 0)}`}>
-                    <span className="text-2xl font-bold">{selectedJob.overallScore || "—"}</span>
+                  <div className={`flex h-14 w-14 items-center justify-center rounded-lg border font-mono text-xl font-bold ${getScoreColor(selectedJob.overallScore || 0)}`}>
+                    {selectedJob.overallScore || "—"}
                   </div>
                   <div>
-                    <SheetTitle className="text-white text-lg">{selectedJob.job.title}</SheetTitle>
-                    <p className="text-sm text-white/60">{selectedJob.job.company} · {selectedJob.job.location}</p>
+                    <SheetTitle className="text-loud text-lg">{selectedJob.job.title}</SheetTitle>
+                    <p className="text-sm text-muted-foreground">{selectedJob.job.company} · {selectedJob.job.location}</p>
                   </div>
                 </div>
               </SheetHeader>
@@ -245,29 +278,71 @@ export default function JobFeed() {
               <div className="mt-6 space-y-6">
                 {selectedJob.job.salaryMin && (
                   <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-green-400" />
-                    <span className="text-sm text-white">
-                      ${(selectedJob.job.salaryMin / 1000).toFixed(0)}K{selectedJob.job.salaryMax ? ` - $${(selectedJob.job.salaryMax / 1000).toFixed(0)}K` : ""} base
+                    <DollarSign className="h-4 w-4 text-emerald-600" />
+                    <span className="text-sm text-foreground font-mono">
+                      ${(selectedJob.job.salaryMin / 1000).toFixed(0)}K{selectedJob.job.salaryMax ? ` – $${(selectedJob.job.salaryMax / 1000).toFixed(0)}K` : ""} base
                     </span>
                   </div>
                 )}
 
-                <Separator className="bg-white/10" />
+                {/* Description */}
+                {selectedJob.job.description && (
+                  <div>
+                    <h4 className="text-sm font-medium text-loud mb-2">Description</h4>
+                    <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                      {descExpanded ? selectedJob.job.description : selectedJob.job.description.slice(0, 400) + (selectedJob.job.description.length > 400 ? "..." : "")}
+                    </p>
+                    {selectedJob.job.description.length > 400 && (
+                      <Button variant="ghost" size="sm" className="mt-1 text-xs text-rose"
+                        onClick={() => setDescExpanded(!descExpanded)}>
+                        {descExpanded ? <><ChevronUp className="h-3 w-3 mr-1" /> Show less</> : <><ChevronDown className="h-3 w-3 mr-1" /> Show more</>}
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* Score Breakdown */}
+                {selectedScores.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-loud mb-2">Score Breakdown</h4>
+                    <ScoreRadar scores={Object.fromEntries(selectedScores.map((s) => [s.dimension, s.score]))} />
+                    <Table className="mt-3">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Dimension</TableHead>
+                          <TableHead className="text-xs text-right">Score</TableHead>
+                          <TableHead className="text-xs">Reason</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedScores.map((s) => (
+                          <TableRow key={s.dimension}>
+                            <TableCell className="text-xs font-medium">{dimensionLabels[s.dimension] || s.dimension}</TableCell>
+                            <TableCell className="text-right font-mono text-xs">{s.score}/5</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{s.reason}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                <Separator className="bg-border" />
 
                 {/* Actions */}
                 <div className="space-y-2">
-                  <Button className="w-full justify-start gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                  <Button className="w-full justify-start gap-2 bg-rose text-primary-foreground hover:bg-rose/90"
                     onClick={() => draftEmail(selectedJob.job.id)} disabled={draftingEmail}>
                     {draftingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     {draftingEmail ? "Drafting..." : "Draft Outreach Email"}
                   </Button>
-                  <Button variant="outline" className="w-full justify-start gap-2 border-white/10 text-white/70 hover:bg-white/10"
+                  <Button variant="outline" className="w-full justify-start gap-2"
                     onClick={() => scheduleFollowup(selectedJob.job.id)}>
                     <CalendarPlus className="h-4 w-4" /> Schedule Follow-up
                   </Button>
                   {selectedJob.job.url && (
                     <a href={selectedJob.job.url} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" className="w-full justify-start gap-2 border-white/10 text-white/70 hover:bg-white/10">
+                      <Button variant="outline" className="w-full justify-start gap-2">
                         <ExternalLink className="h-4 w-4" /> View Original Listing
                       </Button>
                     </a>
@@ -277,19 +352,34 @@ export default function JobFeed() {
                 {/* Drafted Email */}
                 {draftedEmail && (
                   <>
-                    <Separator className="bg-white/10" />
+                    <Separator className="bg-border" />
                     <div>
-                      <h4 className="text-sm font-medium text-white mb-2">Drafted Email</h4>
-                      <div className="rounded-lg bg-white/5 border border-white/10 p-4 space-y-2">
-                        <p className="text-xs text-white/50">Subject:</p>
-                        <p className="text-sm text-white">{draftedEmail.subject}</p>
-                        <Separator className="bg-white/10" />
-                        <p className="text-xs text-white/50">Body:</p>
-                        <p className="text-sm text-white/80 whitespace-pre-wrap">{draftedEmail.body}</p>
+                      <h4 className="text-sm font-medium text-loud mb-2">Drafted Email</h4>
+                      <div className="rounded-lg bg-background border border-border p-4 space-y-2">
+                        <p className="text-xs text-muted-foreground">Subject:</p>
+                        <p className="text-sm text-foreground">{draftedEmail.subject}</p>
+                        <Separator className="bg-border" />
+                        <p className="text-xs text-muted-foreground">Body:</p>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{draftedEmail.body}</p>
                       </div>
                       <div className="flex gap-2 mt-3">
-                        <Button className="flex-1 bg-green-600 hover:bg-green-700"
-                          onClick={() => alert("Email sending requires Google refresh token. Run: npx tsx scripts/get-google-token.ts")}>
+                        <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch("/api/actions", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  action: "send_email",
+                                  jobId: selectedJob.job.id,
+                                  params: { to: "yueyin.melody0919@gmail.com", subject: draftedEmail.subject, body: draftedEmail.body },
+                                }),
+                              });
+                              const data = await res.json();
+                              if (data.sent) alert("Email sent successfully!");
+                              else alert("Failed: " + (data.error || "Unknown error"));
+                            } catch { alert("Email sending failed"); }
+                          }}>
                           <Send className="h-4 w-4 mr-2" /> Send via Gmail
                         </Button>
                       </div>
@@ -303,14 +393,14 @@ export default function JobFeed() {
                     placeholder="Optional: tell us why (e.g. 'salary too low', 'not a Director role', 'love the AI focus')..."
                     value={feedbackComment}
                     onChange={(e) => setFeedbackComment(e.target.value)}
-                    className="w-full rounded-lg border border-white/10 bg-white/5 text-sm text-white placeholder:text-white/30 p-3 h-16 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+                    className="w-full rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-dim p-3 h-16 resize-none focus:outline-none focus:ring-1 focus:ring-rose/50"
                   />
                   <div className="flex gap-2">
-                    <Button className="flex-1 gap-2 bg-green-600/20 text-green-400 hover:bg-green-600/30 border border-green-500/30"
+                    <Button variant="outline" className="flex-1 gap-2 border-emerald-200 text-emerald-600 hover:bg-emerald-50"
                       onClick={() => { handleFeedback(selectedJob.job.id, "thumbs_up", feedbackComment); setSelectedJob(null); }}>
                       <ThumbsUp className="h-4 w-4" /> More Like This
                     </Button>
-                    <Button className="flex-1 gap-2 bg-red-600/20 text-red-400 hover:bg-red-600/30 border border-red-500/30"
+                    <Button variant="outline" className="flex-1 gap-2 border-destructive/20 text-destructive hover:bg-destructive/10"
                       onClick={() => { handleFeedback(selectedJob.job.id, "thumbs_down", feedbackComment); setSelectedJob(null); }}>
                       <ThumbsDown className="h-4 w-4" /> Not For Me
                     </Button>

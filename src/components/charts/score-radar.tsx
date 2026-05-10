@@ -34,34 +34,35 @@ export function ScoreRadar({ scores }: ScoreRadarProps) {
         margin={{ top: 30, right: 60, bottom: 30, left: 60 }}
         curve="linearClosed"
         borderWidth={2}
-        borderColor="rgba(59,130,246,0.8)"
+        borderColor="rgba(15,114,238,0.8)"
         gridLevels={5}
         gridShape="circular"
         gridLabelOffset={12}
         dotSize={6}
-        dotColor="rgba(59,130,246,1)"
+        dotColor="#0F72EE"
         dotBorderWidth={1}
-        dotBorderColor="rgba(255,255,255,0.3)"
-        colors={["rgba(59,130,246,0.4)"]}
+        dotBorderColor="#FFFFFF"
+        colors={["rgba(15,114,238,0.3)"]}
         fillOpacity={0.3}
         blendMode="normal"
         animate
         theme={{
           grid: {
-            line: { stroke: "rgba(255,255,255,0.08)" },
+            line: { stroke: "rgba(207,227,252,0.8)" },
           },
           axis: {
             ticks: {
-              text: { fill: "rgba(255,255,255,0.4)", fontSize: 10 },
+              text: { fill: "#656971", fontSize: 10 },
             },
           },
           tooltip: {
             container: {
-              background: "rgba(0,0,0,0.85)",
-              color: "white",
-              borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.1)",
+              background: "#FFFFFF",
+              color: "#191B1F",
+              borderRadius: "12px",
+              border: "1px solid #CFE3FC",
               fontSize: "12px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
             },
           },
         }}

@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1778379745426,
+      "tag": "0000_pink_siren",
+      "breakpoints": true
+    }
+  ]
+}

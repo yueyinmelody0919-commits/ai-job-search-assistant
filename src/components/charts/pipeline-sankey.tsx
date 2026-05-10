@@ -16,20 +16,14 @@ interface PipelineSankeyProps {
 
 export function PipelineSankey({ data }: PipelineSankeyProps) {
   const counts = data || {
-    discovered: 0,
-    queued: 0,
-    outreached: 0,
-    applied: 0,
-    interviewing: 0,
-    offer: 0,
-    passed: 0,
+    discovered: 0, queued: 0, outreached: 0, applied: 0,
+    interviewing: 0, offer: 0, passed: 0,
   };
 
-  // Don't render if no data
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   if (total === 0) {
     return (
-      <div className="h-[200px] flex items-center justify-center text-white/20 text-sm">
+      <div className="h-[200px] flex items-center justify-center text-dim text-sm">
         No pipeline data yet. Scan and score jobs to see the flow.
       </div>
     );
@@ -37,13 +31,13 @@ export function PipelineSankey({ data }: PipelineSankeyProps) {
 
   const sankeyData = {
     nodes: [
-      { id: "Discovered", color: "rgb(107,114,128)" },
-      { id: "Queued", color: "rgb(59,130,246)" },
-      { id: "Outreached", color: "rgb(168,85,247)" },
-      { id: "Applied", color: "rgb(245,158,11)" },
-      { id: "Interviewing", color: "rgb(34,197,94)" },
-      { id: "Offer", color: "rgb(16,185,129)" },
-      { id: "Passed", color: "rgb(239,68,68)" },
+      { id: "Discovered", color: "#656971" },
+      { id: "Queued", color: "#0F72EE" },
+      { id: "Outreached", color: "#7236D3" },
+      { id: "Applied", color: "#F59E0B" },
+      { id: "Interviewing", color: "#10B981" },
+      { id: "Offer", color: "#059669" },
+      { id: "Passed", color: "#D94444" },
     ],
     links: [
       { source: "Discovered", target: "Queued", value: Math.max(counts.queued, 1) },
@@ -63,38 +57,39 @@ export function PipelineSankey({ data }: PipelineSankeyProps) {
         align="justify"
         colors={(node) => {
           const colorMap: Record<string, string> = {
-            Discovered: "rgba(107,114,128,0.6)",
-            Queued: "rgba(59,130,246,0.6)",
-            Outreached: "rgba(168,85,247,0.6)",
-            Applied: "rgba(245,158,11,0.6)",
-            Interviewing: "rgba(34,197,94,0.6)",
-            Offer: "rgba(16,185,129,0.6)",
-            Passed: "rgba(239,68,68,0.6)",
+            Discovered: "rgba(101,105,113,0.7)",
+            Queued: "rgba(15,114,238,0.7)",
+            Outreached: "rgba(114,54,211,0.7)",
+            Applied: "rgba(245,158,11,0.7)",
+            Interviewing: "rgba(16,185,129,0.7)",
+            Offer: "rgba(5,150,105,0.7)",
+            Passed: "rgba(217,68,68,0.7)",
           };
-          return colorMap[node.id as string] || "rgba(255,255,255,0.3)";
+          return colorMap[node.id as string] || "rgba(101,105,113,0.4)";
         }}
         nodeOpacity={1}
         nodeThickness={14}
         nodeInnerPadding={2}
         nodeBorderWidth={0}
         nodeBorderRadius={3}
-        linkOpacity={0.3}
-        linkHoverOpacity={0.5}
+        linkOpacity={0.2}
+        linkHoverOpacity={0.4}
         linkBlendMode="normal"
         enableLinkGradient
         labelPosition="outside"
         labelOrientation="horizontal"
         labelPadding={8}
-        labelTextColor="rgba(255,255,255,0.5)"
+        labelTextColor="#32363E"
         theme={{
-          labels: { text: { fontSize: 11, fill: "rgba(255,255,255,0.5)" } },
+          labels: { text: { fontSize: 11, fill: "#32363E" } },
           tooltip: {
             container: {
-              background: "rgba(0,0,0,0.85)",
-              color: "white",
-              borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.1)",
+              background: "#FFFFFF",
+              color: "#191B1F",
+              borderRadius: "12px",
+              border: "1px solid #CFE3FC",
               fontSize: "12px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
             },
           },
         }}
