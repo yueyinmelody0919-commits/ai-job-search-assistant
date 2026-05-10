@@ -1,13 +1,16 @@
-import { describe, it, expect, vi, beforeAll } from "vitest";
-
-// All mocks must be declared before any imports that use them
-vi.mock("@/lib/db", () => ({ db: {}, schema: {} }));
-vi.mock("@/lib/integrations/claude", () => ({ chat: vi.fn().mockResolvedValue("Test response from Claude") }));
-vi.mock("@/lib/memory/store", () => ({ logAgentAction: vi.fn().mockResolvedValue(undefined), storeKnowledge: vi.fn().mockResolvedValue(1), storeAgentLearning: vi.fn().mockResolvedValue(undefined) }));
-vi.mock("@/lib/agents/bugs", () => ({ fileBug: vi.fn().mockResolvedValue(1) }));
-vi.mock("@/lib/agents/context", () => ({ loadAgentContext: vi.fn().mockResolvedValue("test context") }));
-
+import { describe, it, expect, vi } from "vitest";
 import { BaseAgent, type AgentConfig } from "@/lib/agents/base";
+
+// Mock the dependencies
+vi.mock("@/lib/integrations/claude", () => ({
+  chat: vi.fn().mockResolvedValue("Test response from Claude"),
+}));
+
+vi.mock("@/lib/memory/store", () => ({
+  logAgentAction: vi.fn().mockResolvedValue(undefined),
+  storeKnowledge: vi.fn().mockResolvedValue(1),
+  storeAgentLearning: vi.fn().mockResolvedValue(undefined),
+}));
 
 const testConfig: AgentConfig = {
   name: "test_agent",

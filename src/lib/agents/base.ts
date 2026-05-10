@@ -8,6 +8,7 @@ import { chat, type ClaudeMessage } from "../integrations/claude";
 import { logAgentAction, storeKnowledge, storeAgentLearning } from "../memory/store";
 import type { KnowledgeCategory } from "../memory/store";
 import { fileBug } from "./bugs";
+import { loadAgentContext } from "./context";
 
 export interface AgentConfig {
   name: string;
@@ -49,15 +50,21 @@ export class BaseAgent {
   ): Promise<string> {
     const history = this.conversationHistory.get(channelId || "default") || [];
 
-    // Inject capability awareness into the system prompt
+    // Load fresh context from the database
     const capabilities = AGENT_CAPABILITIES[this.config.name] || [];
-    const capabilityNote = capabilities.length > 0
-      ? `\n\nYour capabilities: ${capabilities.join(", ")}. If a user asks you to do something outside your capabilities, tell them which colleague can help. If you encounter an error using one of your capabilities, tell the user you've logged a bug report.`
-      : "";
+    const capabilityNote = `\n\nYour capabilities: ${capabilities.join(", ")}. If a user asks you to do something outside your capabilities, tell them which colleague can help. If you encounter an error, tell the user you've logged a bug report.`;
+
+    let freshContext = "";
+    try {
+      freshContext = await loadAgentContext(this.config.name);
+    } catch {
+      // Context loading failed, continue without it
+    }
 
     try {
+      const fullSystemPrompt = `${this.config.systemPrompt}${capabilityNote}\n\n${freshContext}`;
       const response = await chat(
-        this.config.systemPrompt + capabilityNote,
+        fullSystemPrompt,
         [...history, { role: "user", content: userMessage }],
         { temperature: 0.8, maxTokens: 1024 }
       );

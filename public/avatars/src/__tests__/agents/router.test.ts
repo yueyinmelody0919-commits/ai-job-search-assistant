@@ -1,13 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
-
-vi.mock("@/lib/db", () => ({ db: {}, schema: {} }));
-vi.mock("@/lib/integrations/claude", () => ({ chat: vi.fn().mockResolvedValue("Mock response") }));
-vi.mock("@/lib/memory/store", () => ({ logAgentAction: vi.fn(), storeKnowledge: vi.fn(), storeAgentLearning: vi.fn() }));
-vi.mock("@/lib/agents/bugs", () => ({ fileBug: vi.fn().mockResolvedValue(1) }));
-vi.mock("@/lib/agents/context", () => ({ loadAgentContext: vi.fn().mockResolvedValue("test") }));
-
 import { AgentRouter } from "@/slack/router";
 import { BaseAgent } from "@/lib/agents/base";
+
+vi.mock("@/lib/integrations/claude", () => ({
+  chat: vi.fn().mockResolvedValue("Mock response"),
+}));
+vi.mock("@/lib/memory/store", () => ({
+  logAgentAction: vi.fn(),
+  storeKnowledge: vi.fn(),
+  storeAgentLearning: vi.fn(),
+}));
 
 function createMockAgent(name: string): BaseAgent {
   return new (class extends BaseAgent {})(
