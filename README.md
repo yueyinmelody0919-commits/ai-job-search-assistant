@@ -1,33 +1,28 @@
 # Melody's AI Colleague Team
 
-A multi-agent Job Search Assistant built with Claude Code for the Leena AI Director of Strategy & Operations interview assignment.
+A multi-agent Job Search Assistant built with [Claude Code](https://claude.ai/claude-code) for the Leena AI Director of Strategy & Operations assignment.
+
+**GitHub**: [github.com/yueyinmelody0919-commits/leena-job-search-assistant](https://github.com/yueyinmelody0919-commits/leena-job-search-assistant)
 
 ## What This Is
 
-An autonomous AI colleague team that finds, evaluates, and acts on job opportunities on your behalf. Seven AI colleagues — each with distinct personalities inspired by The Office — collaborate via Slack and a mission-control dashboard to run your job search like a GTM pipeline.
+An autonomous AI colleague team that finds, evaluates, and acts on job opportunities. Seven AI colleagues - each with The Office personalities - collaborate via Slack and a dashboard to run a job search like a GTM pipeline.
 
-## Architecture
+The architecture mirrors Leena AI's product: an orchestrator coordinating specialized agents with shared memory, deep integrations, and runtime-configurable capabilities.
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                    AI COLLEAGUE TEAM                              │
-│                                                                    │
-│  ┌───────────────────────────────────────────────────────────┐    │
-│  │           CENTRAL MEMORY SYSTEM (SQLite)                   │    │
-│  └───────────┬─────────────────────────────────┬─────────────┘    │
-│              │                                 │                   │
-│  ┌───────────▼────────────┐  ┌─────────────────▼──────────────┐  │
-│  │   SLACK LAYER          │  │   DASHBOARD (Next.js)           │  │
-│  │   7 Bot Personas       │  │   Dark mode mission control    │  │
-│  │   Socket Mode          │  │   Google Auth + Whitelist       │  │
-│  └────────────────────────┘  └────────────────────────────────┘  │
-│                                                                    │
-│  ┌─────────────────── INTEGRATIONS ──────────────────────────┐   │
-│  │ JSearch · Adzuna · Gmail · Sheets · Calendar · Apollo     │   │
-│  │ Slack · Claude API · Web Search (Tavily)                  │   │
-│  └───────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────┘
-```
+## Live Integrations (9 systems, asked for 3)
+
+| # | System | Read | Write |
+|---|--------|------|-------|
+| 1 | **JSearch** (RapidAPI) | Job listings from LinkedIn/Indeed/Glassdoor | - |
+| 2 | **Adzuna** | Job listings + salary data | - |
+| 3 | **Gmail API** | Thread status | Draft + send outreach emails with resume |
+| 4 | **Google Sheets** | Pipeline state | Write jobs, update stages |
+| 5 | **Google Calendar** | Availability | Follow-up reminders, interview prep |
+| 6 | **Apollo.io** | People at companies | - |
+| 7 | **Slack** (7 bot apps) | Messages, mentions | Agent responses, digests, memes |
+| 8 | **Claude API** | - | Scoring, drafting, agent responses |
+| 9 | **Tavily** | Web search | Market research, company intel |
 
 ## The Colleagues
 
@@ -38,83 +33,67 @@ An autonomous AI colleague team that finds, evaluates, and acts on job opportuni
 | Strategist | Jim Halpert | Outreach & Networking |
 | Ops | Angela Martin | Pipeline & Scheduling |
 | Engineer | Darryl Philbin | Platform Development |
-| L&D Coach | Holly Flax | Learning & Development |
+| Coach | Holly Flax | Learning & Development |
 | QA | Stanley Hudson | Quality Assurance |
 
 ## Key Features
 
-- **9 live external integrations** (JSearch, Adzuna, Gmail, Sheets, Calendar, Apollo, Slack, Claude API, Tavily)
-- **Two-pass scoring**: Hard filter + LLM deep analysis with structured rubric
-- **Thompson Sampling**: Bayesian preference learning from your feedback
-- **Auto vs Manual mode**: Toggle between autonomous operation and manual approval
-- **Mission control dashboard**: Morning brief, job feed, pipeline kanban, agent orchestration, network map
-- **Office-themed personalities**: Memes, banter, and distinct character voices
+- **Two-pass scoring**: Hard filter (seniority, function, location, company type, salary floor) + LLM deep analysis with 9-dimension structured rubric
+- **Thompson Sampling**: Bayesian preference learning - weights shift based on thumbs up/down feedback
+- **Live email outreach**: Gmail drafts with resume attached, contact research via Claude, personalized greetings
+- **Slack digests**: Daily summary of 70+ scored jobs with links to dashboard + Gmail drafts
+- **Editable agent configs**: Toggle capabilities on/off at runtime, changes propagate to agent behavior
+- **Interactive feedback**: Thumbs up boosts scores to 70+, thumbs down removes from feed and updates weights
+- **Pipeline tracking**: Kanban board with Sankey flow visualization
+
+## Dashboard Views
+
+1. **Morning Brief** - Stats, approval queue with clickable jobs, agent activity feed
+2. **Job Feed** - Scored jobs with thumbs up/down, company dossier with description + score breakdown
+3. **Pipeline** - Kanban + Sankey diagram
+4. **Agents** - Agent cards with detail view: activity, capabilities (editable), schedule, knowledge
+5. **Network** - Apollo contact lookup + batch populate from top jobs
+6. **Bugs** - Bug reports with auto-generated fix prompts
+7. **Learning** - L&D recommendations with real resource links
+8. **Preferences** - Live Thompson Sampling weights, feedback history, hard filters
 
 ## Tech Stack
 
-- **Frontend**: Next.js 16, shadcn/ui, Tailwind CSS, Recharts, Nivo, React Flow, Framer Motion
-- **Backend**: Next.js API routes, SQLite via Drizzle ORM
-- **AI**: Claude API (Anthropic) for scoring, drafting, agent brains
-- **Slack**: Bolt SDK, Socket Mode, 7 bot apps
-- **Auth**: Auth.js v5 with Google OAuth + email whitelist
-- **Testing**: Vitest, TDD with pre-push hooks
+- **Frontend**: Next.js 16, shadcn/ui, Tailwind CSS, Nivo (Sankey, Radar), React Flow
+- **Backend**: Next.js API routes, SQLite via Drizzle ORM (@libsql/client)
+- **AI**: Claude API for scoring, email drafting, contact research, agent responses
+- **Slack**: Bolt SDK, Socket Mode, 7 bot apps with Office personalities
+- **Auth**: Auth.js v5, Google OAuth, email whitelist
+- **Testing**: Vitest, 52+ tests, TDD with Husky pre-push hooks
 
 ## Setup
-
-### Prerequisites
-
-- Node.js 20+
-- npm
-- A Slack workspace (free tier works)
-
-### Installation
 
 ```bash
 git clone https://github.com/yueyinmelody0919-commits/leena-job-search-assistant.git
 cd leena-job-search-assistant
 npm install
 cp .env.example .env
-# Fill in your API keys (see .env.example for instructions)
-```
+# Fill in API keys (see .env.example)
 
-### Run Locally
-
-```bash
-# Dashboard
-npm run dev
-
-# Slack bots (separate terminal)
-npm run slack:dev
-```
-
-### Run Tests
-
-```bash
-npm test
+npm run db:seed    # Initialize preferences + agent configs
+npm run dev        # Dashboard at localhost:3000
+npm run slack:dev  # Slack bots (separate terminal)
+npm test           # 52+ passing tests
 ```
 
 ## Deliverables
 
 | Deliverable | Location |
 |-------------|----------|
-| Flow walkthrough | `docs/walkthrough-script.md` |
+| Flow walkthrough | [`docs/walkthrough-script.md`](./docs/walkthrough-script.md) |
 | Code | This repo |
-| Scoring note | `SCORING_NOTE.md` |
-| Build log | `BUILD_LOG.md` |
-| Architecture docs | `docs/architecture.md` |
+| Scoring note | [`SCORING_NOTE.md`](./SCORING_NOTE.md) |
+| Prompting history | [`FULL_CHAT_HISTORY.md`](./FULL_CHAT_HISTORY.md) (231KB, 429 messages) |
 
 ## Scoring Methodology
 
-See [SCORING_NOTE.md](./SCORING_NOTE.md) for the half-page scoring methodology, including:
-- Two-pass scoring architecture
-- Thompson Sampling preference learning
-- Weighted rubric with 9 dimensions
-- What was excluded and why
-
-## Built With
-
-Built entirely using [Claude Code](https://claude.ai/claude-code) by Anthropic — demonstrating AI-native development from architecture to deployment.
+See [SCORING_NOTE.md](./SCORING_NOTE.md) - two-pass architecture, Thompson Sampling preference learning, 9 weighted dimensions, and what was excluded.
 
 ---
 
-*Built by Melody Yin for the Leena AI interview assignment, May 2026*
+*Built by Melody Yin using Claude Code, May 2026*

@@ -1,99 +1,104 @@
-# Flow Walkthrough Script (10-15 minutes)
+# Flow Walkthrough (10-15 min)
 
 ## Setup
-- Dashboard open at `app.wildkittens.com` (or localhost:3000)
-- Slack workspace open with all 7 agents visible
-- Two browser tabs: dashboard + a real job listing for reference
+- Dashboard open at localhost:3000
+- Slack workspace open with #job-search channel visible
+- Gmail (Wildkittens) open showing Drafts folder
 
 ---
 
-## Act 1: The Architecture (2 min)
+## 1. The Dashboard & Architecture (2 min)
 
-**Open the Agents view.**
+**Open Morning Brief (home page).**
 
-"This is a multi-agent system — seven AI colleagues, each with a distinct role, collaborating via Slack and a shared memory system. The architecture mirrors Leena's own AI Colleague pattern: a central orchestrator coordinating specialized agents with deep integrations."
+"This is a multi-agent job search assistant. Seven AI colleagues - each with a role and an Office character - collaborate via Slack and this dashboard. The architecture mirrors Leena's AI Colleague pattern: specialized agents, shared memory, deep integrations."
 
-*Point to the React Flow diagram.* "Scout finds jobs, Analyst scores them, Strategist drafts outreach, Ops manages the pipeline. Engineer improves the platform, Coach handles L&D, QA handles bugs. They all share a central SQLite memory system."
+*Point to the stats row.* "These are live numbers - jobs discovered, scored, outreached, interviews, and feedback signals. All from real data."
 
-"Each agent has a personality from The Office — Dwight is Scout, Oscar is Analyst, Jim is Strategist, Angela is Ops. They send memes."
+**Click Agents in sidebar.** "Each agent has capabilities that can be toggled on/off at runtime, scheduled background tasks, and a full activity log."
 
----
-
-## Act 2: Live Data Discovery (3 min)
-
-**Switch to Slack.** DM Scout (Dwight):
-
-> "Find me CoS roles at Series C+ companies in NYC"
-
-*Wait for Dwight's response.* "Scout searches JSearch and Adzuna APIs in real-time — these are live listings from LinkedIn, Indeed, and Glassdoor. No mock data."
-
-**Switch to Dashboard → Job Feed.**
-
-"Here are the discovered jobs, each scored against my 9-dimension rubric. Click one to see the Company Dossier."
-
-*Click a high-scoring job.* "The radar chart shows where this job scores across all dimensions. The AI provides a fit recommendation. Every score has reasoning — transparent, not a black box."
+*Click into Scout (Dwight).* Show the tabs: Activity, Capabilities (with toggles), Schedule, Knowledge.
 
 ---
 
-## Act 3: Scoring in Action (3 min)
+## 2. Live Data - Scan & Score (3 min)
 
-**DM Analyst (Oscar):**
+**Go back to Morning Brief. Click 'Scan for Jobs'.**
 
-> "Why did this Figma role score 94?"
+"Scout searches JSearch and Adzuna APIs in real-time - these are live listings from LinkedIn, Indeed, Glassdoor. The hard filter rejects anything that doesn't match Director+, GTM/Strategy Ops, NYC/Bay Area, B2B SaaS, $300K+ base. Only jobs passing all five gates enter the system."
 
-*Oscar explains the breakdown with his signature condescension.* "Thompson Sampling means these weights aren't static — they learn from my feedback."
+*Wait for scan to complete.* "Now click 'Score Unscored Jobs'."
 
-**Click 'More Like This' on a job.** "Each thumbs-up updates the Beta distribution posteriors. After about 30 signals, the model converges. Here—" *switch to Preferences view* "—you can see how weights have drifted from their starting values."
+"Analyst sends each job to Claude with a structured rubric - 9 dimensions, weighted by my preferences. The composite score is computed from per-dimension scores multiplied by Thompson Sampling weights, not Claude's self-reported number."
 
----
-
-## Act 4: Real Actions (3 min)
-
-**Click 'Draft Outreach Email' on a high-scoring job.**
-
-"Strategist — Jim — drafts a personalized email referencing my specific experience that matches this role. This isn't a template."
-
-*Show the generated email.* "I can edit inline, then hit Send — it goes via Gmail API to a real inbox."
-
-**Click 'Schedule Follow-up'.** "This creates a Google Calendar event with reminders. If no reply in 5 days, Angela sends me a notification."
-
-*Switch to Pipeline view.* "The Kanban tracks everything. The Sankey diagram shows my conversion funnel — how many jobs flow from discovery to offer."
+**Switch to Job Feed.** "Every job has its score. Click one to see the full breakdown."
 
 ---
 
-## Act 5: The Slack Collaboration (2 min)
+## 3. Scoring Deep Dive (2 min)
 
-**Open the #job-search channel.**
+*Click a high-scoring job to open the dossier.*
 
-"Watch the agents collaborate. Scout found jobs, tagged Analyst to score them, Analyst tagged Strategist to draft outreach. They coordinate autonomously — I just approve."
+"Here's the full picture: job description, salary, and a radar chart showing how it scores across all 9 dimensions. The table below shows the score and Claude's reasoning for each dimension - it's transparent, not a black box."
 
-*Show a meme exchange.* "They also have personality. Jim pranks Dwight. Angela judges everyone. Stanley just wants to go home."
-
-**DM Engineer (Darryl):**
-
-> "Add reviewer@leena.ai to the whitelist"
-
-"Darryl manages dashboard access. He also suggests new features based on what he observes."
+*Point to the score breakdown table.* "Title/Seniority: 5/5 because it's a Head of role. AI-Native: 4/5 because the company uses AI but it's not their core product. Every score has a reason."
 
 ---
 
-## Act 6: The Meta (1 min)
+## 4. Actions - Email Drafts (3 min)
 
-"This entire system was built using Claude Code in under two days. The codebase has 52+ passing tests, TDD with pre-push hooks, auto-push on commit, and comprehensive documentation."
+*Show the thumbs up/down buttons on the feed.*
 
-"The architecture — orchestrator, specialized agents, shared memory, deep integrations — is the same pattern Leena uses for AI Colleagues. I didn't just build a tool. I built a miniature version of your product, for my own use case."
+"I can give feedback directly from the feed. Thumbs down removes the job and updates the scoring weights via Thompson Sampling. Thumbs up boosts the score to 70+ and queues it for outreach."
 
-"Build something you'd actually use. That's the whole brief."
+*Click thumbs up on a lower-scored job.* "Watch the score update."
+
+**Open Gmail Drafts tab.** "For every job scoring 70+, the system researches the hiring contact using Claude, creates a personalized outreach email with my resume attached, and saves it as a Gmail draft. The To field is pre-filled - careers@openai.com, jobs@google.com - and the greeting adapts: 'Dear Recruiting Team' for generic addresses, first names for individuals."
+
+*Open one draft.* "My resume is attached, LinkedIn URL is correct, and the body references specific details about why this role fits my background."
 
 ---
 
-## Key Points to Hit
+## 5. Slack Collaboration (2 min)
 
+**Switch to Slack #job-search channel.**
+
+"The Strategist (Jim) sends me a daily digest - every job over 70, with clickable links to both the dashboard and my Gmail drafts. I review, personalize if needed, and send."
+
+*Show the Slack message with links.* "Each entry has the score, the To address, and two links: one to the dashboard dossier, one to the Gmail draft."
+
+*Show agents responding in the channel.* "Multiple agents respond to messages - Scout finds jobs, Analyst explains scores, Jim drafts emails. They have Office personalities - Dwight says 'FACT:', Oscar says 'Actually...', Stanley just wants to go home."
+
+---
+
+## 6. Pipeline & Preferences (2 min)
+
+**Click Pipeline in sidebar.** "The Kanban tracks jobs through stages: Discovered, Queued, Outreached, Applied, Interviewing, Offer, Passed. The Sankey diagram shows the conversion funnel."
+
+**Click Preferences.** "Thompson Sampling weights are live from the database - not hardcoded. You can see how they've drifted from initial values based on my feedback. The feedback history shows every thumbs up/down with timestamps."
+
+---
+
+## 7. The Meta (1 min)
+
+"Nine live integrations - they asked for three. JSearch, Adzuna, Gmail, Google Sheets, Google Calendar, Apollo, Slack (7 bots), Claude API, and Tavily web search. Real read/write operations: scanning jobs, sending emails, creating calendar events, looking up contacts."
+
+"The system uses Leena's own design patterns: orchestrator coordinating specialized AI colleagues, shared memory, runtime-configurable capabilities, and autonomous workflows with human-in-the-loop approval."
+
+"52 passing tests, TDD with pre-push hooks, full prompting history in FULL_CHAT_HISTORY.md. Built entirely with Claude Code."
+
+"Build something you'd actually use. I'm actually using it."
+
+---
+
+## Checklist
+
+- [ ] Live data scan (JSearch + Adzuna, not mock)
+- [ ] Job scored live with 9-dimension breakdown visible
+- [ ] Thumbs up/down feedback updating scores
+- [ ] Email draft with resume attached shown in Gmail
+- [ ] Slack digest with clickable links
+- [ ] Agent capabilities toggled on/off
+- [ ] Pipeline Kanban with real data
+- [ ] Thompson Sampling weights shown drifting
 - [ ] 9 live integrations (they asked for 3)
-- [ ] Real data from JSearch + Adzuna (not mock)
-- [ ] Thompson Sampling preference learning (real ML technique)
-- [ ] At least one action firing live (email send or calendar event)
-- [ ] Multi-agent Slack collaboration
-- [ ] Auto vs Manual mode toggle
-- [ ] The Office personalities (memorable, fun)
-- [ ] Built with Claude Code (AI-native development)
