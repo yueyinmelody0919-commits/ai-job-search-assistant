@@ -36,25 +36,35 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get jobs with their latest scores and pipeline stage
-    const jobsWithScores = await db
-      .select({
-        job: schema.jobs,
-        overallScore: sql<number>`(
-          SELECT overall_score FROM job_scores
-          WHERE job_id = ${schema.jobs.id} AND pass_number = 2
-          ORDER BY created_at DESC LIMIT 1
-        )`,
-        stage: sql<string>`(
-          SELECT stage FROM pipeline
-          WHERE job_id = ${schema.jobs.id}
-          ORDER BY updated_at DESC LIMIT 1
-        )`,
-      })
+    // Get all jobs, then enrich with scores and pipeline stage
+    const allJobs = await db
+      .select()
       .from(schema.jobs)
       .orderBy(desc(schema.jobs.discoveredAt))
       .limit(limit)
       .offset(offset);
+
+    const jobsWithScores = await Promise.all(
+      allJobs.map(async (job) => {
+        const scoreRow = await db
+          .select({ overallScore: schema.jobScores.overallScore })
+          .from(schema.jobScores)
+          .where(sql`${schema.jobScores.jobId} = ${job.id} AND ${schema.jobScores.passNumber} = 2`)
+          .limit(1);
+
+        const pipelineRow = await db
+          .select({ stage: schema.pipeline.stage })
+          .from(schema.pipeline)
+          .where(eq(schema.pipeline.jobId, job.id))
+          .limit(1);
+
+        return {
+          job,
+          overallScore: scoreRow[0]?.overallScore ?? null,
+          stage: pipelineRow[0]?.stage ?? null,
+        };
+      })
+    );
 
     let results = jobsWithScores;
 

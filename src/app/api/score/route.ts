@@ -47,6 +47,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (jobId) {
+      if (body.rescore) {
+        // Clear existing scores so it can be re-scored with updated weights
+        await db
+          .update(schema.jobs)
+          .set({ scoredAt: null })
+          .where(eq(schema.jobs.id, jobId));
+      }
       const score = await scoreOneJob(jobId);
       return NextResponse.json({ jobId, score });
     }

@@ -125,16 +125,40 @@ function JobFeed() {
     } catch { /* */ }
   }
 
+  const [feedbackPending, setFeedbackPending] = useState<number | null>(null);
+
   async function handleFeedback(jobId: number, type: "thumbs_up" | "thumbs_down", comment?: string) {
+    setFeedbackPending(jobId);
     try {
+      // Submit feedback (updates Thompson Sampling weights)
       await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jobId, type, comment: comment || undefined }),
       });
       setFeedbackComment("");
-      fetchJobs();
+
+      if (type === "thumbs_down") {
+        // Move job to "passed" stage — removes from active feed
+        await fetch("/api/pipeline", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobId, stage: "passed" }),
+        });
+        // Remove from local state immediately
+        setJobs((prev) => prev.filter((j) => j.job.id !== jobId));
+      } else {
+        // Thumbs up: boost score to at least 70 and queue for outreach
+        await fetch("/api/feedback", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobId, action: "boost" }),
+        });
+        // Refresh to show updated score
+        await fetchJobs();
+      }
     } catch { /* */ }
+    setFeedbackPending(null);
   }
 
   async function draftEmail(jobId: number) {
@@ -173,8 +197,9 @@ function JobFeed() {
 
   const filteredJobs = jobs.filter(
     (entry) =>
+      entry.stage !== "passed" && (
       entry.job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entry.job.company.toLowerCase().includes(searchQuery.toLowerCase())
+      entry.job.company.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -208,11 +233,10 @@ function JobFeed() {
         <div className="space-y-2">
           {filteredJobs.map((entry) => (
             <Card key={entry.job.id}
-              className="bg-background border border-border cursor-pointer transition-colors hover:bg-elevated"
-              onClick={() => openDossier(entry)}>
+              className="bg-background border border-border transition-colors hover:bg-elevated">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={() => openDossier(entry)}>
                     <div className={`flex h-11 w-11 items-center justify-center rounded-lg border font-mono text-sm font-bold ${getScoreColor(entry.overallScore || 0)}`}>
                       {entry.overallScore || "—"}
                     </div>
@@ -241,15 +265,21 @@ function JobFeed() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button size="sm" variant="ghost" className="h-8 text-dim hover:text-emerald-600 hover:bg-emerald-50"
-                      onClick={(e) => { e.stopPropagation(); handleFeedback(entry.job.id, "thumbs_up"); }}>
+                  <div className="flex items-center gap-1 relative z-10" onClickCapture={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      disabled={feedbackPending === entry.job.id}
+                      className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-emerald-200 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50 transition-colors"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleFeedback(entry.job.id, "thumbs_up"); }}>
                       <ThumbsUp className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="h-8 text-dim hover:text-destructive hover:bg-destructive/10"
-                      onClick={(e) => { e.stopPropagation(); handleFeedback(entry.job.id, "thumbs_down"); }}>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={feedbackPending === entry.job.id}
+                      className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-red-200 text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleFeedback(entry.job.id, "thumbs_down"); }}>
                       <ThumbsDown className="h-3.5 w-3.5" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </CardContent>

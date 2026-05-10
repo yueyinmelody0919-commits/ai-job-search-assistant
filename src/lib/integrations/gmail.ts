@@ -8,7 +8,7 @@ const GMAIL_BASE_URL = "https://gmail.googleapis.com/gmail/v1/users/me";
 /**
  * Get an OAuth access token using the refresh token.
  */
-async function getAccessToken(): Promise<string> {
+export async function getAccessToken(): Promise<string> {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
@@ -174,4 +174,59 @@ function createRawEmail(to: string, subject: string, body: string): string {
   ].join("\r\n");
 
   return Buffer.from(email).toString("base64url");
+}
+
+/**
+ * Send an email with a file attachment via Gmail.
+ */
+export async function sendEmailWithAttachment(
+  to: string,
+  subject: string,
+  body: string,
+  attachment: { filename: string; content: Buffer; mimeType: string }
+): Promise<{ id: string; threadId: string }> {
+  const token = await getAccessToken();
+
+  const boundary = "boundary_" + Date.now().toString(36);
+  const attachmentBase64 = attachment.content.toString("base64");
+
+  const email = [
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    `MIME-Version: 1.0`,
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    "Content-Type: text/plain; charset=utf-8",
+    "",
+    body,
+    "",
+    `--${boundary}`,
+    `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"`,
+    `Content-Disposition: attachment; filename="${attachment.filename}"`,
+    "Content-Transfer-Encoding: base64",
+    "",
+    attachmentBase64,
+    "",
+    `--${boundary}--`,
+  ].join("\r\n");
+
+  const rawMessage = Buffer.from(email).toString("base64url");
+
+  const response = await fetch(`${GMAIL_BASE_URL}/messages/send`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ raw: rawMessage }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Gmail send with attachment failed: ${text}`);
+  }
+
+  const data = await response.json();
+  return { id: data.id, threadId: data.threadId };
 }
