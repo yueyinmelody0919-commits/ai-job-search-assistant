@@ -1,7 +1,7 @@
 # Complete Chat History — Melody's AI Colleague Team
 
 > Full conversation log from the build session of the Leena AI interview assignment.
-> **Date**: May 9, 2026, 4:34 PM — May 10, 2026, 7:46 PM | **Messages**: 429 | **User prompts**: 62
+> **Date**: May 9, 2026, 4:34 PM — May 10, 2026, 7:50 PM | **Messages**: 436 | **User prompts**: 63
 > **Project**: Multi-agent Job Search Assistant — 7 AI colleagues with The Office personas
 
 ---
@@ -5291,6 +5291,70 @@ Both are session-only (die when Claude exits, 7-day expiry).
 
 ```
 Done. All font sizes bumped up across the dashboard — body text, labels, badges, timestamps, nav items all increased by ~1-2px. Refresh to see the change.
+```
+
+</details>
+
+### 💬 Melody — *May 10, 2026, 7:48 PM ET*
+
+> This is a good milestone. Go back to review the deliverable of this assignment and produce these 3 deliverables for me. Refer to the pdf named Leena AI assignment, Dir S&O
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 7:48 PM ET* — <em>Three deliverables needed. Let me check what already exists and update/create each one....</em></summary>
+
+```
+Three deliverables needed. Let me check what already exists and update/create each one.
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 7:48 PM ET* — <em>Good, all three files exist but need updating to reflect the current state. Let me rewrite each to accurately describe w...</em></summary>
+
+```
+Good, all three files exist but need updating to reflect the current state. Let me rewrite each to accurately describe what was actually built.
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 7:48 PM ET* — <em>Deliverable 1: Scoring Note...</em></summary>
+
+```
+**Deliverable 1: Scoring Note**
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 7:49 PM ET* — <em>Deliverable 2: Flow Walkthrough Script...</em></summary>
+
+```
+**Deliverable 2: Flow Walkthrough Script**
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 7:50 PM ET* — <em>Deliverable 3: Code (README with GitHub link + prompt history)...</em></summary>
+
+```
+**Deliverable 3: Code (README with GitHub link + prompt history)**
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 7:50 PM ET* — <em>All three deliverables updated:  | Deliverable | File | What's in it | |---|---|---| | Scoring note | SCORING_NOTE....</em></summary>
+
+```
+All three deliverables updated:
+
+| Deliverable | File | What's in it |
+|---|---|---|
+| **Scoring note** | `SCORING_NOTE.md` | Half-page: two-pass architecture, 9 dimensions with weights, Thompson Sampling, what was excluded and why |
+| **Flow walkthrough** | `docs/walkthrough-script.md` | 10-15 min script with 7 acts: architecture, live scan, scoring deep dive, email drafts, Slack collab, pipeline, the meta. Includes checklist |
+| **Code** | `README.md` + GitHub repo | Setup guide, 9 integrations table, agent roster, features, tech stack, deliverables table. Prompting history in `FULL_CHAT_HISTORY.md` (231KB, 429 messages) |
 ```
 
 </details>
