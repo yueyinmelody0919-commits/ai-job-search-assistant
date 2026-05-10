@@ -12,6 +12,7 @@ import {
   buildScoringPrompt,
   type LLMScoreResult,
 } from "@/lib/scoring/rubric";
+import { computeCompositeScore, betaMean } from "@/lib/scoring/thompson";
 import { logAgentAction } from "@/lib/memory/store";
 
 export async function POST(request: NextRequest) {
@@ -89,6 +90,31 @@ async function scoreOneJob(
     "growth_trajectory",
   ] as const;
 
+  // Compute overall score ourselves using our weights (not Claude's self-computed number)
+  const currentPrefs = await db.query.preferences.findMany();
+  const weights = new Map<string, number>();
+  const dimScores = new Map<string, number>();
+
+  for (const pref of currentPrefs) {
+    weights.set(pref.dimension, pref.effectiveWeight);
+  }
+
+  for (const dim of dimensions) {
+    const dimScore = result[dim];
+    if (dimScore) {
+      dimScores.set(dim, dimScore.score);
+    }
+  }
+
+  // Normalize weights to sum to 1
+  let weightSum = 0;
+  for (const w of weights.values()) weightSum += w;
+  if (weightSum > 0) {
+    for (const [k, v] of weights) weights.set(k, v / weightSum);
+  }
+
+  const overallScore = computeCompositeScore(dimScores, weights);
+
   for (const dim of dimensions) {
     const dimScore = result[dim];
     if (dimScore) {
@@ -97,7 +123,7 @@ async function scoreOneJob(
         dimension: dim,
         score: dimScore.score,
         reason: dimScore.reason,
-        overallScore: result.overall,
+        overallScore,
         passNumber: 2,
         scoredByAgent: "analyst",
       });

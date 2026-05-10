@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,34 +20,28 @@ interface CompanyContacts {
   contacts: Contact[];
 }
 
-// Demo data (replaced by real API calls when Apollo key is configured)
-const demoData: CompanyContacts[] = [
-  {
-    company: "Figma",
-    contacts: [
-      { name: "Sarah Chen", title: "VP of Operations", email: "s.chen@figma.com", linkedinUrl: null, company: "Figma" },
-      { name: "Mike Rodriguez", title: "Director, Strategy", email: null, linkedinUrl: "https://linkedin.com/in/mrodriguez", company: "Figma" },
-    ],
-  },
-  {
-    company: "Notion",
-    contacts: [
-      { name: "Alex Kim", title: "Chief of Staff", email: "akim@notion.so", linkedinUrl: null, company: "Notion" },
-      { name: "Rachel Wu", title: "Head of People", email: null, linkedinUrl: "https://linkedin.com/in/rachelwu", company: "Notion" },
-    ],
-  },
-  {
-    company: "Ramp",
-    contacts: [
-      { name: "Jordan Lee", title: "VP Revenue Operations", email: "jlee@ramp.com", linkedinUrl: null, company: "Ramp" },
-    ],
-  },
-];
+// No mock data — only real contacts from Apollo lookups
 
 export default function NetworkPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [companies, setCompanies] = useState<CompanyContacts[]>(demoData);
+  const [companies, setCompanies] = useState<CompanyContacts[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Load saved contacts on mount
+  useEffect(() => {
+    fetch("/api/network")
+      .then(r => r.json())
+      .then(data => {
+        if (data.contacts && typeof data.contacts === "object") {
+          const loaded = Object.entries(data.contacts).map(([company, contacts]) => ({
+            company,
+            contacts: contacts as Contact[],
+          }));
+          if (loaded.length > 0) setCompanies(loaded);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   async function lookupCompany() {
     if (!searchQuery.trim()) return;

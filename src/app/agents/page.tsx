@@ -1,145 +1,219 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  ReactFlow,
-  Background,
-  Controls,
-  type Node,
-  type Edge,
-  Position,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Loader2 } from "lucide-react";
 
-const agents = [
-  { name: "Scout", character: "Dwight Schrute", role: "Discovery & Research", status: "active", lastAction: "Found 3 new roles", color: "from-amber-600 to-orange-700", emoji: "🔍", actionsToday: 12 },
-  { name: "Analyst", character: "Oscar Martinez", role: "Scoring & Market Intel", status: "active", lastAction: "Scored 5 jobs", color: "from-blue-600 to-indigo-700", emoji: "📊", actionsToday: 8 },
-  { name: "Strategist", character: "Jim Halpert", role: "Outreach & Networking", status: "active", lastAction: "Drafted 2 emails", color: "from-green-600 to-emerald-700", emoji: "✉️", actionsToday: 5 },
-  { name: "Ops", character: "Angela Martin", role: "Pipeline & Scheduling", status: "active", lastAction: "3 follow-ups scheduled", color: "from-rose-600 to-pink-700", emoji: "⏰", actionsToday: 7 },
-  { name: "Engineer", character: "Darryl Philbin", role: "Platform Development", status: "idle", lastAction: "Shipped dark mode", color: "from-gray-600 to-zinc-700", emoji: "🛠️", actionsToday: 2 },
-  { name: "Coach", character: "Holly Flax", role: "Learning & Development", status: "active", lastAction: "New skill recommendations", color: "from-purple-600 to-violet-700", emoji: "📚", actionsToday: 3 },
-  { name: "QA", character: "Stanley Hudson", role: "Quality Assurance", status: "idle", lastAction: "All tests passing", color: "from-stone-600 to-neutral-700", emoji: "🐛", actionsToday: 1 },
-];
-
-function AgentNode({ data }: { data: typeof agents[0] }) {
-  return (
-    <div className="rounded-xl border border-white/20 bg-black/80 backdrop-blur-xl p-4 min-w-[180px] shadow-lg shadow-black/50">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-xl">{data.emoji}</span>
-        <div>
-          <p className="text-sm font-semibold text-white">{data.name}</p>
-          <p className="text-[10px] text-white/40">{data.character}</p>
-        </div>
-        <div className={`ml-auto h-2.5 w-2.5 rounded-full ${data.status === "active" ? "bg-green-400 animate-pulse" : "bg-white/20"}`} />
-      </div>
-      <p className="text-[10px] text-white/50 mb-2">{data.role}</p>
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] text-white/30">{data.lastAction}</p>
-        <Badge variant="outline" className="text-[9px] border-white/10 text-white/40">
-          {data.actionsToday} today
-        </Badge>
-      </div>
-    </div>
-  );
+interface AgentData {
+  name: string;
+  lastAction: { action: string; details: string | null; createdAt: string } | null;
+  actionsToday: number;
+  totalLearnings: number;
+  status: string;
 }
 
-const nodeTypes = { agent: AgentNode };
+interface AgentLog {
+  agent: string;
+  action: string;
+  details: string | null;
+  outcome: string | null;
+  createdAt: string;
+}
+
+const AGENT_META: Record<string, { displayName: string; character: string; role: string; avatar: string; color: string }> = {
+  scout: { displayName: "Scout", character: "Dwight Schrute", role: "Discovery & Research", avatar: "/avatars/dwight.jpg", color: "from-amber-600 to-orange-700" },
+  analyst: { displayName: "Analyst", character: "Oscar Martinez", role: "Scoring & Market Intel", avatar: "/avatars/oscar.jpg", color: "from-blue-600 to-indigo-700" },
+  strategist: { displayName: "Strategist", character: "Jim Halpert", role: "Outreach & Networking", avatar: "/avatars/jim.jpg", color: "from-green-600 to-emerald-700" },
+  ops: { displayName: "Ops", character: "Angela Martin", role: "Pipeline & Scheduling", avatar: "/avatars/angela.jpg", color: "from-rose-600 to-pink-700" },
+  engineer: { displayName: "Engineer", character: "Darryl Philbin", role: "Platform Development", avatar: "/avatars/darryl.jpg", color: "from-gray-600 to-zinc-700" },
+  coach: { displayName: "Coach", character: "Holly Flax", role: "Learning & Development", avatar: "/avatars/holly.jpg", color: "from-purple-600 to-violet-700" },
+  qa: { displayName: "QA", character: "Stanley Hudson", role: "Quality Assurance", avatar: "/avatars/stanley.jpg", color: "from-stone-600 to-neutral-700" },
+};
+
+function toNYC(dateStr: string): string {
+  return new Date(dateStr).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
 
 export default function AgentsPage() {
-  const nodes: Node[] = useMemo(() => [
-    // Central orchestrator
-    { id: "orchestrator", position: { x: 350, y: 20 }, data: { label: "🧠 Orchestrator" }, type: "default",
-      style: { background: "rgba(59,130,246,0.2)", border: "1px solid rgba(59,130,246,0.4)", color: "white", borderRadius: "12px", padding: "12px 20px", fontSize: "14px", fontWeight: "600" } },
-    // Shared memory
-    { id: "memory", position: { x: 350, y: 420 }, data: { label: "💾 Shared Memory (SQLite)" }, type: "default",
-      style: { background: "rgba(168,85,247,0.2)", border: "1px solid rgba(168,85,247,0.4)", color: "white", borderRadius: "12px", padding: "10px 16px", fontSize: "12px" } },
-    // Agents in a circle around orchestrator
-    { id: "scout", position: { x: 50, y: 120 }, data: agents[0], type: "agent", sourcePosition: Position.Bottom, targetPosition: Position.Top },
-    { id: "analyst", position: { x: 280, y: 120 }, data: agents[1], type: "agent", sourcePosition: Position.Bottom, targetPosition: Position.Top },
-    { id: "strategist", position: { x: 520, y: 120 }, data: agents[2], type: "agent", sourcePosition: Position.Bottom, targetPosition: Position.Top },
-    { id: "ops", position: { x: 720, y: 120 }, data: agents[3], type: "agent", sourcePosition: Position.Bottom, targetPosition: Position.Top },
-    { id: "engineer", position: { x: 50, y: 290 }, data: agents[4], type: "agent", sourcePosition: Position.Bottom, targetPosition: Position.Top },
-    { id: "coach", position: { x: 350, y: 290 }, data: agents[5], type: "agent", sourcePosition: Position.Bottom, targetPosition: Position.Top },
-    { id: "qa", position: { x: 640, y: 290 }, data: agents[6], type: "agent", sourcePosition: Position.Bottom, targetPosition: Position.Top },
-  ], []);
+  const [agents, setAgents] = useState<AgentData[]>([]);
+  const [logs, setLogs] = useState<AgentLog[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const edges: Edge[] = useMemo(() => [
-    // Orchestrator to agents
-    { id: "o-scout", source: "orchestrator", target: "scout", animated: true, style: { stroke: "rgba(251,191,36,0.5)" } },
-    { id: "o-analyst", source: "orchestrator", target: "analyst", animated: true, style: { stroke: "rgba(59,130,246,0.5)" } },
-    { id: "o-strategist", source: "orchestrator", target: "strategist", animated: true, style: { stroke: "rgba(34,197,94,0.5)" } },
-    { id: "o-ops", source: "orchestrator", target: "ops", animated: true, style: { stroke: "rgba(244,63,94,0.5)" } },
-    // Agent-to-agent flows
-    { id: "scout-analyst", source: "scout", target: "analyst", animated: true, label: "new jobs", style: { stroke: "rgba(251,191,36,0.3)" }, labelStyle: { fill: "rgba(255,255,255,0.3)", fontSize: "10px" } },
-    { id: "analyst-strategist", source: "analyst", target: "strategist", animated: true, label: "scored 85+", style: { stroke: "rgba(59,130,246,0.3)" }, labelStyle: { fill: "rgba(255,255,255,0.3)", fontSize: "10px" } },
-    { id: "strategist-ops", source: "strategist", target: "ops", animated: true, label: "email sent", style: { stroke: "rgba(34,197,94,0.3)" }, labelStyle: { fill: "rgba(255,255,255,0.3)", fontSize: "10px" } },
-    // All agents to shared memory
-    { id: "scout-mem", source: "scout", target: "memory", style: { stroke: "rgba(168,85,247,0.2)", strokeDasharray: "4 4" } },
-    { id: "analyst-mem", source: "analyst", target: "memory", style: { stroke: "rgba(168,85,247,0.2)", strokeDasharray: "4 4" } },
-    { id: "strategist-mem", source: "strategist", target: "memory", style: { stroke: "rgba(168,85,247,0.2)", strokeDasharray: "4 4" } },
-    { id: "ops-mem", source: "ops", target: "memory", style: { stroke: "rgba(168,85,247,0.2)", strokeDasharray: "4 4" } },
-    { id: "engineer-mem", source: "engineer", target: "memory", style: { stroke: "rgba(168,85,247,0.2)", strokeDasharray: "4 4" } },
-    { id: "coach-mem", source: "coach", target: "memory", style: { stroke: "rgba(168,85,247,0.2)", strokeDasharray: "4 4" } },
-    { id: "qa-mem", source: "qa", target: "memory", style: { stroke: "rgba(168,85,247,0.2)", strokeDasharray: "4 4" } },
-    // QA monitors all
-    { id: "qa-engineer", source: "qa", target: "engineer", style: { stroke: "rgba(120,113,108,0.3)", strokeDasharray: "6 3" }, label: "bug reports", labelStyle: { fill: "rgba(255,255,255,0.2)", fontSize: "9px" } },
-    // Coach observes analyst
-    { id: "coach-analyst", source: "analyst", target: "coach", style: { stroke: "rgba(168,85,247,0.3)", strokeDasharray: "6 3" }, label: "skill gaps", labelStyle: { fill: "rgba(255,255,255,0.2)", fontSize: "9px" } },
-  ], []);
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await fetch("/api/agents");
+      const data = await res.json();
+      setAgents(data.agents || []);
+
+      // Collect all logs
+      const allLogs: AgentLog[] = [];
+      for (const agent of data.agents || []) {
+        if (agent.lastAction) allLogs.push(agent.lastAction);
+      }
+      setLogs(allLogs.sort((a: AgentLog, b: AgentLog) => b.createdAt.localeCompare(a.createdAt)));
+    } catch { /* */ }
+  }, []);
+
+  useEffect(() => {
+    let m = true;
+    fetchData().finally(() => { if (m) setLoading(false); });
+    return () => { m = false; };
+  }, [fetchData]);
+
+  // Fetch full activity log for selected agent
+  useEffect(() => {
+    if (!selectedAgent) return;
+    fetch(`/api/agents?agent=${selectedAgent}`)
+      .then(r => r.json())
+      .then(d => {
+        // If the API returns agent-specific logs, use them
+        if (d.logs) setLogs(d.logs);
+      })
+      .catch(() => {});
+  }, [selectedAgent]);
+
+  if (loading) {
+    return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-white/30" /></div>;
+  }
+
+  const filteredLogs = selectedAgent
+    ? logs.filter(l => l.agent === selectedAgent)
+    : logs;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-white">Agent Orchestration</h2>
         <Badge variant="outline" className="border-green-500/30 text-green-400 text-xs">
-          {agents.filter((a) => a.status === "active").length} active
+          {agents.filter(a => a.status === "active").length} active
         </Badge>
       </div>
 
-      {/* React Flow Diagram */}
-      <Card className="border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden">
-        <div className="h-[520px]">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={nodeTypes}
-            fitView
-            proOptions={{ hideAttribution: true }}
-            style={{ background: "transparent" }}
-          >
-            <Background color="rgba(255,255,255,0.03)" gap={20} />
-            <Controls
-              style={{ background: "rgba(0,0,0,0.5)", borderColor: "rgba(255,255,255,0.1)" }}
-            />
-          </ReactFlow>
-        </div>
-      </Card>
+      {/* Agent Cards */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {agents.map((agent) => {
+          const meta = AGENT_META[agent.name];
+          if (!meta) return null;
+          const isSelected = selectedAgent === agent.name;
 
-      {/* Agent Cards Grid */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-        {agents.map((agent) => (
-          <Card key={agent.name} className="border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden transition-all hover:border-white/20 cursor-pointer">
-            <div className={`h-1 bg-gradient-to-r ${agent.color}`} />
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{agent.emoji}</span>
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-semibold text-white">{agent.name}</span>
-                    <div className={`h-1.5 w-1.5 rounded-full ${agent.status === "active" ? "bg-green-400 animate-pulse" : "bg-white/20"}`} />
+          return (
+            <Card
+              key={agent.name}
+              className={`border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden cursor-pointer transition-all hover:border-white/20 ${isSelected ? "ring-1 ring-blue-500/50 border-blue-500/30" : ""}`}
+              onClick={() => setSelectedAgent(isSelected ? null : agent.name)}
+            >
+              <div className={`h-1 bg-gradient-to-r ${meta.color}`} />
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10 border border-white/10">
+                    <AvatarImage src={meta.avatar} alt={meta.character} />
+                    <AvatarFallback className="bg-white/10 text-white/50 text-xs">
+                      {meta.displayName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-white">{meta.displayName}</span>
+                      <div className={`h-2 w-2 rounded-full ${agent.status === "active" ? "bg-green-400 animate-pulse" : "bg-white/20"}`} />
+                    </div>
+                    <p className="text-[10px] text-white/40">{meta.character} — {meta.role}</p>
                   </div>
-                  <p className="text-[10px] text-white/40">{agent.character}</p>
                 </div>
-                <Badge variant="outline" className="text-[9px] border-white/10 text-white/40">
-                  {agent.actionsToday}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="flex gap-3">
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-white">{agent.actionsToday}</p>
+                      <p className="text-[9px] text-white/30">today</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-white">{agent.totalLearnings}</p>
+                      <p className="text-[9px] text-white/30">learnings</p>
+                    </div>
+                  </div>
+                </div>
+
+                {agent.lastAction && (
+                  <div className="mt-3 rounded-lg bg-white/[0.03] border border-white/5 p-2">
+                    <p className="text-[11px] text-white/50 truncate">
+                      {agent.lastAction.action.replace(/_/g, " ")}
+                    </p>
+                    <p className="text-[9px] text-white/25 mt-0.5">
+                      {toNYC(agent.lastAction.createdAt)}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
+
+      {/* Activity Log */}
+      <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm text-white">
+              {selectedAgent ? `${AGENT_META[selectedAgent]?.displayName} Activity Log` : "All Agent Activity"}
+            </CardTitle>
+            {selectedAgent && (
+              <Badge
+                variant="outline"
+                className="text-[10px] border-white/10 text-white/40 cursor-pointer hover:text-white/60"
+                onClick={() => setSelectedAgent(null)}
+              >
+                Show all
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[300px]">
+            {filteredLogs.length > 0 ? (
+              <div className="space-y-2">
+                {filteredLogs.map((log, i) => {
+                  const meta = AGENT_META[log.agent];
+                  return (
+                    <div key={i} className="flex items-start gap-3 rounded-lg p-2 hover:bg-white/[0.03] transition-colors">
+                      <Avatar className="h-6 w-6 mt-0.5 border border-white/10">
+                        <AvatarImage src={meta?.avatar} />
+                        <AvatarFallback className="bg-white/10 text-[9px]">{log.agent[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-white/80">
+                          <span className="font-medium text-white">{meta?.displayName || log.agent}</span>{" "}
+                          {log.action.replace(/_/g, " ")}
+                        </p>
+                        {log.details && (
+                          <p className="text-[10px] text-white/30 mt-0.5 truncate">
+                            {typeof log.details === "string" ? log.details.slice(0, 120) : JSON.stringify(log.details).slice(0, 120)}
+                          </p>
+                        )}
+                        <p className="text-[9px] text-white/20 mt-0.5">
+                          {toNYC(log.createdAt)}
+                        </p>
+                      </div>
+                      {log.outcome && (
+                        <Badge variant="outline" className={`text-[9px] ${log.outcome === "success" ? "border-green-500/20 text-green-400/60" : "border-red-500/20 text-red-400/60"}`}>
+                          {log.outcome}
+                        </Badge>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-white/30 text-center py-8">
+                No activity yet. Interact with agents in Slack to see logs here.
+              </p>
+            )}
+          </ScrollArea>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -64,6 +64,7 @@ export default function JobFeed() {
   const [loading, setLoading] = useState(true);
   const [draftingEmail, setDraftingEmail] = useState(false);
   const [draftedEmail, setDraftedEmail] = useState<{ subject: string; body: string } | null>(null);
+  const [feedbackComment, setFeedbackComment] = useState("");
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -89,13 +90,14 @@ export default function JobFeed() {
     } catch { /* */ }
   }
 
-  async function handleFeedback(jobId: number, type: "thumbs_up" | "thumbs_down") {
+  async function handleFeedback(jobId: number, type: "thumbs_up" | "thumbs_down", comment?: string) {
     try {
       await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobId, type }),
+        body: JSON.stringify({ jobId, type, comment: comment || undefined }),
       });
+      setFeedbackComment("");
       fetchJobs();
     } catch { /* */ }
   }
@@ -296,15 +298,23 @@ export default function JobFeed() {
                 )}
 
                 {/* Feedback */}
-                <div className="flex gap-2 pt-2">
-                  <Button className="flex-1 gap-2 bg-green-600/20 text-green-400 hover:bg-green-600/30 border border-green-500/30"
-                    onClick={() => { handleFeedback(selectedJob.job.id, "thumbs_up"); setSelectedJob(null); }}>
-                    <ThumbsUp className="h-4 w-4" /> More Like This
-                  </Button>
-                  <Button className="flex-1 gap-2 bg-red-600/20 text-red-400 hover:bg-red-600/30 border border-red-500/30"
-                    onClick={() => { handleFeedback(selectedJob.job.id, "thumbs_down"); setSelectedJob(null); }}>
-                    <ThumbsDown className="h-4 w-4" /> Not For Me
-                  </Button>
+                <div className="space-y-2 pt-2">
+                  <textarea
+                    placeholder="Optional: tell us why (e.g. 'salary too low', 'not a Director role', 'love the AI focus')..."
+                    value={feedbackComment}
+                    onChange={(e) => setFeedbackComment(e.target.value)}
+                    className="w-full rounded-lg border border-white/10 bg-white/5 text-sm text-white placeholder:text-white/30 p-3 h-16 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+                  />
+                  <div className="flex gap-2">
+                    <Button className="flex-1 gap-2 bg-green-600/20 text-green-400 hover:bg-green-600/30 border border-green-500/30"
+                      onClick={() => { handleFeedback(selectedJob.job.id, "thumbs_up", feedbackComment); setSelectedJob(null); }}>
+                      <ThumbsUp className="h-4 w-4" /> More Like This
+                    </Button>
+                    <Button className="flex-1 gap-2 bg-red-600/20 text-red-400 hover:bg-red-600/30 border border-red-500/30"
+                      onClick={() => { handleFeedback(selectedJob.job.id, "thumbs_down", feedbackComment); setSelectedJob(null); }}>
+                      <ThumbsDown className="h-4 w-4" /> Not For Me
+                    </Button>
+                  </div>
                 </div>
               </div>
             </>

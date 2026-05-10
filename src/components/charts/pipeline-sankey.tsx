@@ -16,14 +16,24 @@ interface PipelineSankeyProps {
 
 export function PipelineSankey({ data }: PipelineSankeyProps) {
   const counts = data || {
-    discovered: 32,
-    queued: 8,
-    outreached: 5,
-    applied: 3,
-    interviewing: 2,
+    discovered: 0,
+    queued: 0,
+    outreached: 0,
+    applied: 0,
+    interviewing: 0,
     offer: 0,
-    passed: 4,
+    passed: 0,
   };
+
+  // Don't render if no data
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  if (total === 0) {
+    return (
+      <div className="h-[200px] flex items-center justify-center text-white/20 text-sm">
+        No pipeline data yet. Scan and score jobs to see the flow.
+      </div>
+    );
+  }
 
   const sankeyData = {
     nodes: [

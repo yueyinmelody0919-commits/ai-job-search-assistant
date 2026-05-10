@@ -93,14 +93,12 @@ export function hardFilter(job: Job): HardFilterResult {
   const failedGates: string[] = [];
   const matchedGates: string[] = [];
 
-  // Gate 1: Seniority
-  const seniorityMatch = SENIORITY_KEYWORDS.some(
-    (kw) => titleLower.includes(kw) || descLower.includes(kw)
-  );
+  // Gate 1: Seniority — MUST appear in the TITLE (not just description)
+  const seniorityMatch = SENIORITY_KEYWORDS.some((kw) => titleLower.includes(kw));
   if (seniorityMatch) matchedGates.push("seniority");
   else failedGates.push("seniority");
 
-  // Gate 2: Function
+  // Gate 2: Function — title or description
   const functionMatch = FUNCTION_KEYWORDS.some(
     (kw) => titleLower.includes(kw) || descLower.includes(kw)
   );
@@ -120,6 +118,14 @@ export function hardFilter(job: Job): HardFilterResult {
   );
   if (companyTypeMatch) matchedGates.push("company_type");
   else failedGates.push("company_type");
+
+  // Gate 5: Salary floor — if salary is listed, it must be >= $300K
+  // (allowing some buffer below $350K target since listed ranges vary)
+  if (job.salaryMax && job.salaryMax < 300000) {
+    failedGates.push("salary_floor");
+  } else {
+    matchedGates.push("salary_floor");
+  }
 
   return {
     passed: failedGates.length === 0,
