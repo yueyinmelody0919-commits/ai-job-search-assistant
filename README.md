@@ -57,19 +57,49 @@ This isn't a coincidence. I studied the product and built something that demonst
 
 ## System Architecture
 
-![System Architecture](docs/diagrams/system-architecture.svg)
-
-### Data Flow
-
-![Data Flow](docs/diagrams/data-flow.svg)
+```
+                              SLACK (7 bots)
+                                   |
+                            Message Router
+                     __________|___|___________
+                    |     |     |    |    |    |
+                 Scout Analyst Strat Ops Eng Coach QA
+                 (Dwight)(Oscar)(Jim)(Angela)...
+                    |     |     |    |
+                    v     v     v    v
+              +-----------+-----------+-----------+
+              |     INTEGRATIONS (9 live systems) |
+              |                                   |
+              |  JSearch + Adzuna ... job listings |
+              |  Gmail ........... draft/send email|
+              |  Google Sheets ... pipeline tracker|
+              |  Google Calendar . follow-ups      |
+              |  Apollo .......... contact lookup  |
+              |  Claude API ...... scoring/drafting|
+              |  Tavily .......... web research    |
+              +-----------+-----------+-----------+
+                          |
+                    SQLite (14 tables)
+                    shared memory for
+                    all agents + dashboard
+                          |
+              +-----------+-----------+
+              |   DASHBOARD (Next.js) |
+              |                       |
+              |  Morning Brief        |
+              |  Job Feed + Dossier   |
+              |  Pipeline Kanban      |
+              |  Agent Settings       |
+              |  Network Map          |
+              |  Preferences          |
+              +-----------------------+
+```
 
 ---
 
 ## Agent Orchestration
 
 Each agent is a `BaseAgent` instance with a character persona, a system prompt, and a set of capabilities that can be toggled at runtime from the dashboard.
-
-![Agent Routing](docs/diagrams/agent-routing.svg)
 
 **How it works:**
 1. User sends a message in Slack (DM or #job-search channel)
@@ -98,8 +128,6 @@ Each agent is a `BaseAgent` instance with a character persona, a system prompt, 
 
 ### Two-Pass Architecture
 
-![Scoring Engine](docs/diagrams/scoring-engine.svg)
-
 **Pass 1** eliminates ~70% of listings instantly with no API cost. The key design decision: seniority keywords must appear in the job **title**, not the description, to avoid false positives from JDs that mention "reports to the Director."
 
 **Pass 2** sends each surviving job to Claude with a structured prompt that returns JSON scores across 9 dimensions. The composite score is computed using preference weights from Thompson Sampling - not Claude's self-reported overall score.
@@ -120,8 +148,6 @@ After ~30 feedback signals, the weights converge on the user's true preferences.
 ## Integrations
 
 ### Integration Architecture
-
-![Integrations](docs/diagrams/integrations.svg)
 
 ### Email Outreach Pipeline
 
@@ -172,8 +198,6 @@ The dashboard uses Leena AI's brand palette (#0F72EE primary blue, light backgro
 ---
 
 ## Database Schema
-
-![Database Schema](docs/diagrams/db-schema.svg)
 
 14 tables total: jobs, job_scores, feedback, preferences, pipeline, contacts, knowledge, agent_logs, agent_learnings, features, skills, whitelist, bugs, agent_configs.
 
