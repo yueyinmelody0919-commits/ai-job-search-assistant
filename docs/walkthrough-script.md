@@ -13,7 +13,9 @@
 
 "So the assignment said build a job search assistant. I looked at what Leena actually builds - specialized AI agents, shared memory, deep integrations - and I thought, why not build that? Same pattern, applied to my own job search.
 
-Seven agents, nine live integrations, a scoring engine that learns from my feedback. I'm actually using it right now. Let me walk you through it."
+Seven agents, nine live integrations, a scoring engine that learns from my feedback. I'm actually using it right now.
+
+I built the whole thing in Claude Code - planned the architecture, scaffolded the Next.js app with Drizzle ORM and shadcn, then iterated through hundreds of test cycles across the API routes, Slack bots, scoring engine, and OAuth flows. 11,000 lines of TypeScript, 52 passing tests, TDD with pre-push hooks. Let me walk you through it."
 
 ---
 
