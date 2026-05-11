@@ -2,6 +2,8 @@
 
 A multi-agent Job Search Assistant built with [Claude Code](https://claude.ai/claude-code) for the Leena AI Director of Strategy & Operations assignment.
 
+Loom walkthrough: https://www.loom.com/share/d54035b03f66466ea2996218c1a1f646
+
 **GitHub**: [github.com/yueyinmelody0919-commits/leena-job-search-assistant](https://github.com/yueyinmelody0919-commits/leena-job-search-assistant)
 
 > **Build something you'd actually use.** I built a miniature version of Leena's product - for my own job search.
