@@ -7,19 +7,13 @@
 
 ---
 
-## Opening: Why I Built It This Way (1 min)
+## Opening (30 sec)
 
-*Dashboard visible in background. Speak directly.*
+*Dashboard visible. Casual, direct.*
 
-"Before I show you the tool, I want to share why I designed it the way I did.
+"So the assignment said build a job search assistant. I looked at what Leena actually builds - specialized AI agents, shared memory, deep integrations - and I thought, why not build that? Same pattern, applied to my own job search.
 
-The assignment says build a job search assistant. I could have built a single script that scrapes jobs and sends emails. Instead, I built a **multi-agent orchestration system** - because that's what Leena builds.
-
-I studied your product. Leena's AI Colleagues are specialized agents - each with a distinct role - coordinated by an orchestrator, sharing a central knowledge base, with deep enterprise integrations. So I built the same pattern: seven agents, each with configurable capabilities, a shared SQLite memory system, and nine live integrations. The architecture isn't just functional - it's a deliberate mirror of your product.
-
-Why does that matter? Because my background is in **operationalizing complex systems**. At BCG, I designed operating models for Fortune 500 companies. At Mixpanel, I built the GTM operations stack from the ground up - pipeline analytics, pricing strategy, cross-functional planning. What I do is take a strategic vision and turn it into a system that runs.
-
-This tool is that skill applied to AI. It's not a demo - I'm actually using it for my job search right now. Let me show you how."
+Seven agents, nine live integrations, a scoring engine that learns from my feedback. I'm actually using it right now. Let me walk you through it."
 
 ---
 
