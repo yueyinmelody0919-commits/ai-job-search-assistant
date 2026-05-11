@@ -57,79 +57,11 @@ This isn't a coincidence. I studied the product and built something that demonst
 
 ## System Architecture
 
-```mermaid
-graph TB
-    subgraph External["External Systems (9 Live Integrations)"]
-        JS[JSearch API]
-        AZ[Adzuna API]
-        GM[Gmail API]
-        GS[Google Sheets]
-        GC[Google Calendar]
-        AP[Apollo.io]
-        SL[Slack - 7 Bots]
-        CL[Claude API]
-        TV[Tavily Web Search]
-    end
-
-    subgraph Core["Core Engine"]
-        OR[Message Router]
-        SC[Scoring Engine]
-        TS[Thompson Sampling]
-        CT[Contact Research]
-    end
-
-    subgraph Agents["AI Colleagues"]
-        A1["Scout (Dwight)\nDiscovery"]
-        A2["Analyst (Oscar)\nScoring"]
-        A3["Strategist (Jim)\nOutreach"]
-        A4["Ops (Angela)\nPipeline"]
-        A5["Engineer (Darryl)\nPlatform"]
-        A6["Coach (Holly)\nL&D"]
-        A7["QA (Stanley)\nQuality"]
-    end
-
-    subgraph Data["Shared Memory (SQLite)"]
-        DB[(14 Tables)]
-    end
-
-    subgraph UI["Dashboard (Next.js)"]
-        MB[Morning Brief]
-        JF[Job Feed]
-        PL[Pipeline]
-        AG[Agent Settings]
-        NW[Network Map]
-        PR[Preferences]
-    end
-
-    SL --> OR
-    OR --> A1 & A2 & A3 & A4 & A5 & A6 & A7
-    A1 --> JS & AZ & TV
-    A2 --> CL & SC
-    A3 --> GM & AP & CT
-    A4 --> GS & GC
-    SC --> TS
-    A1 & A2 & A3 & A4 & A5 & A6 & A7 --> DB
-    DB --> UI
-    UI --> DB
-```
+![System Architecture](docs/diagrams/system-architecture.svg)
 
 ### Data Flow
 
-```mermaid
-flowchart LR
-    A[Scan Jobs] -->|JSearch + Adzuna| B[Hard Filter]
-    B -->|Pass 5 gates| C[Store in DB]
-    B -->|Fail any gate| X[Rejected]
-    C --> D[Score via Claude]
-    D -->|9 dimensions| E[Composite Score]
-    E -->|70+| F[Draft Email]
-    E -->|< 70| G[Feed for Review]
-    F -->|Contact Research| H[Gmail Draft]
-    H --> I[Slack Digest]
-    G -->|Thumbs Up| F
-    G -->|Thumbs Down| J[Passed / Removed]
-    J -->|Update weights| D
-```
+![Data Flow](docs/diagrams/data-flow.svg)
 
 ---
 
@@ -137,23 +69,7 @@ flowchart LR
 
 Each agent is a `BaseAgent` instance with a character persona, a system prompt, and a set of capabilities that can be toggled at runtime from the dashboard.
 
-```mermaid
-graph LR
-    subgraph Message Flow
-        U[User Message] --> R[Router]
-        R -->|Job search| S[Scout]
-        R -->|Score question| A[Analyst]
-        R -->|Email/outreach| ST[Strategist]
-        R -->|Pipeline/schedule| O[Ops]
-        R -->|Feature request| E[Engineer]
-        R -->|Learning| C[Coach]
-        R -->|Bug report| Q[QA]
-    end
-
-    subgraph Runtime Config
-        DB[(agent_configs)] -->|Load on each request| S & A & ST & O & E & C & Q
-    end
-```
+![Agent Routing](docs/diagrams/agent-routing.svg)
 
 **How it works:**
 1. User sends a message in Slack (DM or #job-search channel)
@@ -182,28 +98,7 @@ graph LR
 
 ### Two-Pass Architecture
 
-```mermaid
-flowchart TD
-    J[Raw Job Listing] --> P1{Pass 1: Hard Filter}
-    P1 -->|"Seniority in TITLE\n(Director, VP, CoS)"| G1[Gate 1]
-    G1 -->|"Function match\n(GTM, Strategy, Biz Ops)"| G2[Gate 2]
-    G2 -->|"Location\n(NYC, Bay Area, Remote)"| G3[Gate 3]
-    G3 -->|"Company type\n(B2B, SaaS, Tech, AI)"| G4[Gate 4]
-    G4 -->|"Salary floor\n($300K+ if listed)"| G5[Gate 5]
-    G5 -->|All pass| P2[Pass 2: LLM Score]
-    P1 -->|Any fail| R[Rejected]
-    G1 -->|Fail| R
-    G2 -->|Fail| R
-    G3 -->|Fail| R
-    G4 -->|Fail| R
-
-    P2 -->|Claude API| SC[9 Dimension Scores]
-    SC --> W[Apply Preference Weights]
-    W --> CS[Composite Score 0-100]
-
-    FB[User Feedback] -->|Thumbs up/down| TS[Thompson Sampling]
-    TS -->|Update Beta distributions| W
-```
+![Scoring Engine](docs/diagrams/scoring-engine.svg)
 
 **Pass 1** eliminates ~70% of listings instantly with no API cost. The key design decision: seniority keywords must appear in the job **title**, not the description, to avoid false positives from JDs that mention "reports to the Director."
 
@@ -226,26 +121,7 @@ After ~30 feedback signals, the weights converge on the user's true preferences.
 
 ### Integration Architecture
 
-```mermaid
-graph TB
-    subgraph "Read Operations"
-        R1[JSearch] -->|"Job listings\nLinkedIn, Indeed, Glassdoor"| DB[(SQLite)]
-        R2[Adzuna] -->|"Job listings\n+ salary data"| DB
-        R3[Apollo] -->|"People at companies\nemail, title, LinkedIn"| DB
-        R4[Tavily] -->|"Web search\ncompany research"| DB
-    end
-
-    subgraph "Read + Write Operations"
-        RW1[Gmail] -->|"Read: thread status\nWrite: draft + send emails"| DB
-        RW2[Sheets] -->|"Read: pipeline state\nWrite: job tracking"| DB
-        RW3[Calendar] -->|"Read: availability\nWrite: follow-ups, prep"| DB
-        RW4[Slack] -->|"Read: messages\nWrite: responses, digests"| DB
-    end
-
-    subgraph "AI Operations"
-        AI1[Claude API] -->|"Scoring, drafting\ncontact research\nagent responses"| DB
-    end
-```
+![Integrations](docs/diagrams/integrations.svg)
 
 ### Email Outreach Pipeline
 
@@ -297,73 +173,7 @@ The dashboard uses Leena AI's brand palette (#0F72EE primary blue, light backgro
 
 ## Database Schema
 
-```mermaid
-erDiagram
-    jobs ||--o{ job_scores : scores
-    jobs ||--o{ pipeline : tracked_in
-    jobs ||--o{ feedback : receives
-    preferences ||--|| feedback : updated_by
-    agent_configs ||--|| agent_logs : configures
-    contacts }|--|| knowledge : enriches
-
-    jobs {
-        int id PK
-        string title
-        string company
-        text description
-        string location
-        real salary_min
-        real salary_max
-        string url
-        string source
-    }
-
-    job_scores {
-        int id PK
-        int job_id FK
-        string dimension
-        real score
-        text reason
-        real overall_score
-        int pass_number
-    }
-
-    pipeline {
-        int id PK
-        int job_id FK
-        string stage
-        text notes
-    }
-
-    feedback {
-        int id PK
-        int job_id FK
-        string type
-        text comment
-    }
-
-    preferences {
-        int id PK
-        string dimension
-        real alpha
-        real beta_param
-        real effective_weight
-    }
-
-    agent_configs {
-        int id PK
-        string agent
-        string capability
-        boolean enabled
-    }
-
-    agent_logs {
-        int id PK
-        string agent
-        string action
-        text details
-    }
-```
+![Database Schema](docs/diagrams/db-schema.svg)
 
 14 tables total: jobs, job_scores, feedback, preferences, pipeline, contacts, knowledge, agent_logs, agent_learnings, features, skills, whitelist, bugs, agent_configs.
 

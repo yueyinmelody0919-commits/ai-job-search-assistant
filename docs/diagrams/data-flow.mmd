@@ -1,0 +1,14 @@
+flowchart LR
+    A["Scan Jobs"] -->|"JSearch + Adzuna"| B{"Hard Filter<br/>5 gates"}
+    B -->|"Pass all"| C["Store in DB"]
+    B -->|"Fail any"| X["Rejected"]
+    C --> D["Score via Claude<br/>9 dimensions"]
+    D --> E{"Score >= 70?"}
+    E -->|"Yes"| F["Draft Email<br/>+ Research Contact"]
+    E -->|"No"| G["Feed for Review"]
+    F --> H["Gmail Draft<br/>+ Resume"]
+    H --> I["Slack Digest<br/>with links"]
+    G -->|"Thumbs Up"| J["Boost to 70+"]
+    J --> F
+    G -->|"Thumbs Down"| K["Remove + Update Weights"]
+    K -.->|"Thompson Sampling"| D

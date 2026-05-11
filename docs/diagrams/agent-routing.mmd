@@ -1,0 +1,15 @@
+graph LR
+    subgraph Message_Flow["Message Flow"]
+        U["User Message"] --> R["Router"]
+        R -->|"Job search"| S["Scout"]
+        R -->|"Score question"| A["Analyst"]
+        R -->|"Email/outreach"| ST["Strategist"]
+        R -->|"Pipeline/schedule"| O["Ops"]
+        R -->|"Feature request"| E["Engineer"]
+        R -->|"Learning"| C["Coach"]
+        R -->|"Bug report"| Q["QA"]
+    end
+
+    subgraph Runtime_Config["Runtime Config"]
+        DB[("agent_configs<br/>DB table")] -->|"Load on each request"| S & A & ST & O & E & C & Q
+    end

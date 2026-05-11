@@ -1,0 +1,18 @@
+graph TB
+    subgraph Read_Operations["Read Operations"]
+        R1["JSearch<br/>LinkedIn, Indeed, Glassdoor"] --> DB[("SQLite")]
+        R2["Adzuna<br/>+ salary data"] --> DB
+        R3["Apollo<br/>contacts, emails"] --> DB
+        R4["Tavily<br/>company research"] --> DB
+    end
+
+    subgraph ReadWrite_Operations["Read + Write Operations"]
+        RW1["Gmail<br/>read threads, send emails"] --> DB
+        RW2["Sheets<br/>pipeline tracking"] --> DB
+        RW3["Calendar<br/>follow-ups, prep"] --> DB
+        RW4["Slack<br/>7 bots, messages, digests"] --> DB
+    end
+
+    subgraph AI_Operations["AI Operations"]
+        AI1["Claude API<br/>scoring, drafting, agents"] --> DB
+    end

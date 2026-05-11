@@ -1,0 +1,54 @@
+erDiagram
+    jobs ||--o{ job_scores : scores
+    jobs ||--o{ pipeline : tracked_in
+    jobs ||--o{ feedback : receives
+    preferences ||--|| feedback : updated_by
+
+    jobs {
+        int id PK
+        string title
+        string company
+        text description
+        string location
+        real salary_min
+        real salary_max
+        string url
+    }
+
+    job_scores {
+        int id PK
+        int job_id FK
+        string dimension
+        real score
+        text reason
+        real overall_score
+    }
+
+    pipeline {
+        int id PK
+        int job_id FK
+        string stage
+        text notes
+    }
+
+    feedback {
+        int id PK
+        int job_id FK
+        string type
+        text comment
+    }
+
+    preferences {
+        int id PK
+        string dimension
+        real alpha
+        real beta_param
+        real effective_weight
+    }
+
+    agent_configs {
+        int id PK
+        string agent
+        string capability
+        boolean enabled
+    }

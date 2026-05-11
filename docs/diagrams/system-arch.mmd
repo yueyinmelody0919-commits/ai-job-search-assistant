@@ -1,0 +1,49 @@
+graph TB
+    subgraph External["External Systems - 9 Live Integrations"]
+        JS["JSearch API<br/>(LinkedIn, Indeed)"]
+        AZ["Adzuna API<br/>(salary data)"]
+        GM["Gmail API<br/>(draft + send)"]
+        GS["Google Sheets<br/>(pipeline tracker)"]
+        GC["Google Calendar<br/>(follow-ups)"]
+        AP["Apollo.io<br/>(contacts)"]
+        SL["Slack<br/>(7 bot apps)"]
+        CL["Claude API<br/>(scoring, drafting)"]
+        TV["Tavily<br/>(web search)"]
+    end
+
+    subgraph Core["Core Engine"]
+        OR["Message Router"]
+        SC["Scoring Engine<br/>9 dimensions"]
+        TS["Thompson Sampling<br/>preference learning"]
+    end
+
+    subgraph Agents["AI Colleagues - The Office Edition"]
+        A1["Scout<br/>Dwight Schrute"]
+        A2["Analyst<br/>Oscar Martinez"]
+        A3["Strategist<br/>Jim Halpert"]
+        A4["Ops<br/>Angela Martin"]
+        A5["Engineer<br/>Darryl Philbin"]
+        A6["Coach<br/>Holly Flax"]
+        A7["QA<br/>Stanley Hudson"]
+    end
+
+    subgraph Data["Shared Memory"]
+        DB[("SQLite<br/>14 tables")]
+    end
+
+    subgraph UI["Dashboard - Next.js"]
+        MB["Morning Brief"]
+        JF["Job Feed"]
+        PL["Pipeline"]
+        AG["Agents"]
+    end
+
+    SL --> OR
+    OR --> A1 & A2 & A3 & A4 & A5 & A6 & A7
+    A1 --> JS & AZ
+    A2 --> CL
+    A3 --> GM & AP
+    A4 --> GS & GC
+    A1 & A2 & A3 & A4 --> DB
+    SC --> TS
+    DB --> UI

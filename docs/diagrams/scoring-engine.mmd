@@ -1,0 +1,24 @@
+flowchart TD
+    J["Raw Job Listing"] --> P1{"Pass 1: Hard Filter<br/>(instant, no LLM)"}
+    P1 --> G1["Gate 1: Seniority in TITLE<br/>Director, VP, Head of, CoS"]
+    G1 --> G2["Gate 2: Function Match<br/>GTM, Strategy, Biz Ops"]
+    G2 --> G3["Gate 3: Location<br/>NYC, Bay Area, Remote"]
+    G3 --> G4["Gate 4: Company Type<br/>B2B, SaaS, Tech, AI"]
+    G4 --> G5["Gate 5: Salary Floor<br/>$300K+ if listed"]
+    G5 --> P2["Pass 2: LLM Deep Score"]
+
+    P1 -->|"Fail"| R["Rejected ~70%"]
+
+    P2 --> SC["Claude API scores 9 dimensions"]
+    SC --> D1["Title/Seniority 20%"]
+    SC --> D2["Function Fit 20%"]
+    SC --> D3["Company Stage 15%"]
+    SC --> D4["AI-Native 12%"]
+    SC --> D5["Location 10%"]
+    SC --> D6["Reporting Line 8%"]
+    SC --> D7["Comp Signal 8%"]
+    SC --> D8["Industry 5%"]
+    SC --> D9["Growth 2%"]
+
+    D1 & D2 & D3 & D4 & D5 & D6 & D7 & D8 & D9 --> W["Weighted Sum<br/>Thompson Sampling weights"]
+    W --> CS["Composite Score 0-100"]

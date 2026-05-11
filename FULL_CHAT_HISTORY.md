@@ -1,7 +1,7 @@
 # Complete Chat History — Melody's AI Colleague Team
 
 > Full conversation log from the build session of the Leena AI interview assignment.
-> **Date**: May 9, 2026, 4:34 PM — May 10, 2026, 8:04 PM | **Messages**: 438 | **User prompts**: 64
+> **Date**: May 9, 2026, 4:34 PM — May 10, 2026, 9:33 PM | **Messages**: 451 | **User prompts**: 65
 > **Project**: Multi-agent Job Search Assistant — 7 AI colleagues with The Office personas
 
 ---
@@ -5384,6 +5384,127 @@ Now here are my suggestions for additional deliverables that would impress the L
 5. **Comparison table: Assignment spec vs what was built** - A simple table showing they asked for 3 integrations and you built 9, they asked for 1 action and you built 5, etc. Makes the over-delivery obvious at a glance.
 
 Want me to create any of these?
+```
+
+</details>
+
+### 💬 Melody — *May 10, 2026, 8:06 PM ET*
+
+> ah I can't see these diagrams, how can we get them to show up? should they be separate files? can you make them in markdown? do we need to add them as images? do whatever is most standard for architecture diagrams on repos like this.
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 8:07 PM ET* — <em>GitHub renders mermaid blocks natively, but they won't show in local editors or most markdown viewers. The standard ap...</em></summary>
+
+```
+GitHub renders `mermaid` blocks natively, but they won't show in local editors or most markdown viewers. The standard approach is to generate SVG images and embed them. Let me do that.
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 9:28 PM ET* — <em>Mermaid CLI needs a browser to render. The most reliable and standard approach is to use mermaid.ink URLs (renders on th...</em></summary>
+
+```
+Mermaid CLI needs a browser to render. The most reliable and standard approach is to use mermaid.ink URLs (renders on the fly) — this is what major open-source repos use. But even simpler: I'll create clean ASCII/text diagrams in markdown that render everywhere.
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 9:29 PM ET* — <em>Mermaid CLI is available. Let me generate SVG images from each diagram....</em></summary>
+
+```
+Mermaid CLI is available. Let me generate SVG images from each diagram.
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 9:29 PM ET* — <em>Now generate SVGs from each:...</em></summary>
+
+```
+Now generate SVGs from each:
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 9:30 PM ET* — <em>All 4 SVGs generated. Now update the README to embed them as images:...</em></summary>
+
+```
+All 4 SVGs generated. Now update the README to embed them as images:
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 9:31 PM ET* — <em>Now replace the scoring engine mermaid block:...</em></summary>
+
+```
+Now replace the scoring engine mermaid block:
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 9:31 PM ET* — <em>Now replace the DB schema mermaid block:...</em></summary>
+
+```
+Now replace the DB schema mermaid block:
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 9:31 PM ET* — <em>Now replace the remaining inline mermaid blocks (agent orchestration and integration architecture):...</em></summary>
+
+```
+Now replace the remaining inline mermaid blocks (agent orchestration and integration architecture):
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 9:32 PM ET* — <em>Now replace the remaining mermaid blocks in the README:...</em></summary>
+
+```
+Now replace the remaining mermaid blocks in the README:
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 9:32 PM ET* — <em>Verify no mermaid blocks remain:...</em></summary>
+
+```
+Verify no mermaid blocks remain:
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 9:32 PM ET* — <em>All mermaid blocks replaced with SVG images. Let me verify the README looks clean:...</em></summary>
+
+```
+All mermaid blocks replaced with SVG images. Let me verify the README looks clean:
+```
+
+</details>
+
+<details>
+<summary>🤖 <strong>Claude</strong> — *May 10, 2026, 9:33 PM ET* — <em>6 SVG diagrams embedded in the README:  1. System Architecture - Full system with all 9 integrations, agents, core e...</em></summary>
+
+```
+6 SVG diagrams embedded in the README:
+
+1. **System Architecture** - Full system with all 9 integrations, agents, core engine, dashboard
+2. **Data Flow** - Job scan through scoring, feedback loop, email drafting pipeline
+3. **Agent Routing** - Message flow from user through router to agents, with runtime config from DB
+4. **Scoring Engine** - Two-pass architecture with 5 hard filter gates + 9 dimension LLM scoring
+5. **Integrations** - Read vs read/write vs AI operations map
+6. **Database Schema** - ER diagram of the 6 core tables
+
+These render everywhere - GitHub, local editors, any browser. The mermaid source files are also kept in `docs/diagrams/*.mmd` for future editing.
 ```
 
 </details>
