@@ -7,13 +7,27 @@
 
 ---
 
+## Opening: Why I Built It This Way (1 min)
+
+*Dashboard visible in background. Speak directly.*
+
+"Before I show you the tool, I want to share why I designed it the way I did.
+
+The assignment says build a job search assistant. I could have built a single script that scrapes jobs and sends emails. Instead, I built a **multi-agent orchestration system** - because that's what Leena builds.
+
+I studied your product. Leena's AI Colleagues are specialized agents - each with a distinct role - coordinated by an orchestrator, sharing a central knowledge base, with deep enterprise integrations. So I built the same pattern: seven agents, each with configurable capabilities, a shared SQLite memory system, and nine live integrations. The architecture isn't just functional - it's a deliberate mirror of your product.
+
+Why does that matter? Because my background is in **operationalizing complex systems**. At BCG, I designed operating models for Fortune 500 companies. At Mixpanel, I built the GTM operations stack from the ground up - pipeline analytics, pricing strategy, cross-functional planning. What I do is take a strategic vision and turn it into a system that runs.
+
+This tool is that skill applied to AI. It's not a demo - I'm actually using it for my job search right now. Let me show you how."
+
+---
+
 ## 1. The Dashboard & Architecture (2 min)
 
 **Open Morning Brief (home page).**
 
-"This is a multi-agent job search assistant. Seven AI colleagues - each with a role and an Office character - collaborate via Slack and this dashboard. The architecture mirrors Leena's AI Colleague pattern: specialized agents, shared memory, deep integrations."
-
-*Point to the stats row.* "These are live numbers - jobs discovered, scored, outreached, interviews, and feedback signals. All from real data."
+*Point to the stats row.* "These are live numbers - jobs discovered, scored, outreached, interviews, and feedback signals. All from real data, nine integrations."
 
 **Click Agents in sidebar.** "Each agent has capabilities that can be toggled on/off at runtime, scheduled background tasks, and a full activity log."
 
