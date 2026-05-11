@@ -21,11 +21,17 @@ I built the whole thing in Claude Code - planned the architecture, scaffolded th
 
 ## 1. The Dashboard & Architecture (2 min)
 
-**Open Morning Brief (home page).**
+**Open the README on GitHub** (or locally). *Scroll to the architecture diagram.*
 
-*Point to the stats row.* "These are live numbers - jobs discovered, scored, outreached, interviews, and feedback signals. All from real data, nine integrations."
+"Here's the system at a glance." *Point to the text diagram.* "Slack messages come in, the router dispatches to the right agents, they hit the integrations, everything writes to a shared SQLite memory layer, and the dashboard reads from it. Simple but it covers a lot of ground."
 
-**Click Agents in sidebar.** "Each agent has capabilities that can be toggled on/off at runtime, scheduled background tasks, and a full activity log."
+*Scroll briefly to the integrations table.* "Nine live systems - they asked for three."
+
+**Switch to the dashboard - Morning Brief.**
+
+*Point to the stats row.* "These are live numbers from those integrations. Jobs discovered, scored, outreached, interviews, feedback signals."
+
+**Click Agents in sidebar.** "Each agent has capabilities I can toggle on or off at runtime, scheduled tasks, and a full activity log."
 
 *Click into Scout (Dwight).* Show the tabs: Activity, Capabilities (with toggles), Schedule, Knowledge.
 
