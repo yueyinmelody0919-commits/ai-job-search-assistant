@@ -402,7 +402,7 @@ function JobFeed() {
                                 body: JSON.stringify({
                                   action: "send_email",
                                   jobId: selectedJob.job.id,
-                                  params: { to: "yueyin.melody0919@gmail.com", subject: draftedEmail.subject, body: draftedEmail.body },
+                                  params: { subject: draftedEmail.subject, body: draftedEmail.body },
                                 }),
                               });
                               const data = await res.json();

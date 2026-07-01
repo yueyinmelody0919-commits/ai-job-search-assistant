@@ -19,7 +19,7 @@ graph TB
         CT[Contact Research]
     end
 
-    subgraph Agents["AI Colleagues"]
+    subgraph Agents["Specialized AI Agents"]
         A1["Scout (Dwight)\nDiscovery"]
         A2["Analyst (Oscar)\nScoring"]
         A3["Strategist (Jim)\nOutreach"]

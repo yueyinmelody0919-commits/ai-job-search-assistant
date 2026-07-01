@@ -17,6 +17,19 @@ import {
 } from "@/lib/integrations/calendar";
 import { logAgentAction } from "@/lib/memory/store";
 
+// Sender identity + resume are configurable via .env so anyone can run this
+// against their own job search. Defaults are placeholders — override them.
+const SENDER_NAME = process.env.SENDER_NAME || "Your Name";
+const SENDER_CONTACT = process.env.SENDER_CONTACT || "you@example.com | Your City";
+const SENDER_LINKEDIN = process.env.SENDER_LINKEDIN || "linkedin.com/in/your-handle";
+const SENDER_BIO =
+  process.env.SENDER_BIO ||
+  "A bit about me: I lead GTM Strategy & Operations, where I own the revenue operations stack end to end — from pipeline analytics to pricing to cross-functional planning. Before that I spent several years in management consulting advising on go-to-market transformation and operational scaling.";
+const OWNER_EMAIL = process.env.OWNER_EMAIL || "you@example.com";
+const RESUME_PATH =
+  process.env.RESUME_PATH || path.resolve(process.cwd(), "data/resume.pdf");
+const RESUME_FILENAME = process.env.RESUME_FILENAME || "resume.pdf";
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -79,10 +92,11 @@ export async function POST(request: NextRequest) {
       }
 
       case "send_email": {
-        const { to, subject, body: emailBody } = params;
-        if (!to || !subject || !emailBody) {
+        const { subject, body: emailBody } = params;
+        const to = params.to || OWNER_EMAIL;
+        if (!subject || !emailBody) {
           return NextResponse.json(
-            { error: "to, subject, and body required" },
+            { error: "subject and body required" },
             { status: 400 }
           );
         }
@@ -247,13 +261,13 @@ If you cannot determine the exact person, use the company's general recruiting e
           ? "Dear Recruiting Team"
           : `Hi ${recipientName.split(" ")[0]}`;
 
-        const draftSubject = `${j.title} - Melody Yin`;
+        const draftSubject = `${j.title} - ${SENDER_NAME}`;
 
         const draftBody = `${greeting},
 
 I hope this message finds you well. I came across the ${j.title} role at ${j.company} and was immediately drawn to it. The combination of ${j.company}'s growth trajectory and the scope of this position aligns closely with what I'm looking for in my next chapter.
 
-A bit about me: I'm currently leading GTM Strategy & Operations at Mixpanel, where I manage a team of 3 and own the full revenue operations stack, from pipeline analytics to pricing strategy to cross-functional planning. Before that, I spent 4 years at BCG advising Fortune 500 companies on go-to-market transformations and operational scaling.
+${SENDER_BIO}
 
 What excites me most about this opportunity:
 - The chance to build and scale operations at a company in a high-growth phase
@@ -265,12 +279,12 @@ I've attached my resume for your reference. I'd love the chance to connect brief
 Would you be open to a quick conversation this week or next?
 
 Best regards,
-Melody Yin
-melody.yin@mixpanel.com | NYC
-https://www.linkedin.com/in/melody-yin-917092b8/`;
+${SENDER_NAME}
+${SENDER_CONTACT}
+${SENDER_LINKEDIN}`;
 
         // Create draft with resume attachment
-        const resumePath = path.resolve(process.cwd(), "reference_content/Resume_Melody Yin.pdf");
+        const resumePath = RESUME_PATH;
         let draft;
         try {
           const resumeBuffer = fs.readFileSync(resumePath);
@@ -289,8 +303,8 @@ https://www.linkedin.com/in/melody-yin-917092b8/`;
             draftBody,
             "",
             `--${boundary}`,
-            `Content-Type: application/pdf; name="Resume_Melody_Yin.pdf"`,
-            `Content-Disposition: attachment; filename="Resume_Melody_Yin.pdf"`,
+            `Content-Type: application/pdf; name="${RESUME_FILENAME}"`,
+            `Content-Disposition: attachment; filename="${RESUME_FILENAME}"`,
             "Content-Transfer-Encoding: base64",
             "",
             attachmentBase64,
@@ -327,17 +341,17 @@ https://www.linkedin.com/in/melody-yin-917092b8/`;
       }
 
       case "networking_email": {
-        const to = params.to || "yueyin.melody0919@gmail.com";
+        const to = params.to || OWNER_EMAIL;
         const recipientName = params.recipientName || "Hiring Manager";
         const recipientTitle = params.recipientTitle || "";
 
-        const subject = `${j.title} - Melody Yin`;
+        const subject = `${j.title} - ${SENDER_NAME}`;
 
         const body = `Hi ${recipientName},
 
 I hope this message finds you well. I came across the ${j.title} role at ${j.company} and was immediately drawn to it. The combination of ${j.company}'s growth trajectory and the scope of this position aligns closely with what I'm looking for in my next chapter.
 
-A bit about me: I'm currently leading GTM Strategy & Operations at Mixpanel, where I manage a team of 3 and own the full revenue operations stack, from pipeline analytics to pricing strategy to cross-functional planning. Before that, I spent 4 years at BCG advising Fortune 500 companies on go-to-market transformations and operational scaling.
+${SENDER_BIO}
 
 What excites me most about this opportunity:
 • The chance to build and scale operations at a company in a high-growth phase
@@ -349,18 +363,18 @@ I've attached my resume for your reference. I'd love the chance to connect brief
 Would you be open to a quick conversation this week or next?
 
 Best regards,
-Melody Yin
-melody.yin@mixpanel.com | NYC
-linkedin.com/in/melodyyin`;
+${SENDER_NAME}
+${SENDER_CONTACT}
+${SENDER_LINKEDIN}`;
 
         // Attach resume
-        const resumePath = path.resolve(process.cwd(), "reference_content/Resume_Melody Yin.pdf");
+        const resumePath = RESUME_PATH;
         let sent;
 
         try {
           const resumeBuffer = fs.readFileSync(resumePath);
           sent = await sendEmailWithAttachment(to, subject, body, {
-            filename: "Resume_Melody_Yin.pdf",
+            filename: RESUME_FILENAME,
             content: resumeBuffer,
             mimeType: "application/pdf",
           });
@@ -377,9 +391,9 @@ linkedin.com/in/melodyyin`;
       }
 
       case "test_email": {
-        const to = params.to || "yueyin.melody0919@gmail.com";
-        const subject = `Test Email - AI Colleague Team - ${new Date().toLocaleString("en-US", { timeZone: "America/New_York" })}`;
-        const emailBody = `Hi Melody,\n\nThis is a test email from your AI Colleague Team dashboard.\n\nIf you're reading this, Gmail integration is working correctly.\n\nJob referenced: ${j.title} at ${j.company}\n\nBest,\nJim (Strategist Agent)`;
+        const to = params.to || OWNER_EMAIL;
+        const subject = `Test Email - Job Search OS - ${new Date().toLocaleString("en-US", { timeZone: "America/New_York" })}`;
+        const emailBody = `Hi there,\n\nThis is a test email from your Job Search OS dashboard.\n\nIf you're reading this, Gmail integration is working correctly.\n\nJob referenced: ${j.title} at ${j.company}\n\nBest,\nJim (Strategist Agent)`;
 
         const sent = await sendEmail(to, subject, emailBody);
 

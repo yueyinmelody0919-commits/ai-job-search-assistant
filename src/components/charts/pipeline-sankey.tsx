@@ -32,7 +32,7 @@ export function PipelineSankey({ data }: PipelineSankeyProps) {
   const sankeyData = {
     nodes: [
       { id: "Discovered", color: "#656971" },
-      { id: "Queued", color: "#0F72EE" },
+      { id: "Queued", color: "#4F46E5" },
       { id: "Outreached", color: "#7236D3" },
       { id: "Applied", color: "#F59E0B" },
       { id: "Interviewing", color: "#10B981" },
@@ -87,7 +87,7 @@ export function PipelineSankey({ data }: PipelineSankeyProps) {
               background: "#FFFFFF",
               color: "#191B1F",
               borderRadius: "12px",
-              border: "1px solid #CFE3FC",
+              border: "1px solid #E4E4F0",
               fontSize: "12px",
               boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
             },

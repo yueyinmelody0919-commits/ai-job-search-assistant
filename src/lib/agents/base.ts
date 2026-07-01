@@ -1,5 +1,5 @@
 /**
- * Base Agent class — shared logic for all AI colleagues.
+ * Base Agent class — shared logic for all specialized AI agents.
  * Each agent has: a persona (system prompt), a Slack identity, access to
  * shared memory, and the ability to file bug reports.
  */

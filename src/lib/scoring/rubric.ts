@@ -119,9 +119,11 @@ export function hardFilter(job: Job): HardFilterResult {
   if (companyTypeMatch) matchedGates.push("company_type");
   else failedGates.push("company_type");
 
-  // Gate 5: Salary floor — if salary is listed, it must be >= $300K
-  // (allowing some buffer below $350K target since listed ranges vary)
-  if (job.salaryMax && job.salaryMax < 300000) {
+  // Gate 5: Salary floor — configurable via MIN_SALARY_FLOOR (default: disabled).
+  // When set, a listed salary below the floor fails the gate. Listings without
+  // salary data always pass, since ranges are frequently omitted.
+  const salaryFloor = Number(process.env.MIN_SALARY_FLOOR) || 0;
+  if (salaryFloor > 0 && job.salaryMax && job.salaryMax < salaryFloor) {
     failedGates.push("salary_floor");
   } else {
     matchedGates.push("salary_floor");
@@ -136,18 +138,24 @@ export function hardFilter(job: Job): HardFilterResult {
 
 // ─── Pass 2: LLM Deep Score Prompt ─────────────────────────────
 
+// Candidate profile the scorer evaluates against. Override via CANDIDATE_PROFILE
+// in .env to point the whole system at your own search. The default below is an
+// illustrative example profile.
+const CANDIDATE_PROFILE =
+  process.env.CANDIDATE_PROFILE ||
+  `- Current Role: Marketing Strategy & Operations lead (Director-level scope, small team)
+- Background: MBA (Business Analytics), management consulting, corporate finance
+- Expertise: GTM strategy, pipeline optimization, AI-powered outbound, lead scoring, marketing automation
+- Key Achievement: Deployed AI SDR and intent-based outbound (multi-million-dollar pipeline impact)
+- Target: Director+ roles in GTM Ops, Strategy Ops, Business Ops, or Chief of Staff to CEO
+- Target Companies: High-growth B2B SaaS/tech, ideally Series B-D
+- Location: NYC (primary), open to Bay Area / remote
+- Comp Target: competitive senior-leadership compensation (configurable)`;
+
 export const SCORING_SYSTEM_PROMPT = `You are a job-fit scoring analyst. You evaluate job listings against a candidate's profile using a structured rubric.
 
 CANDIDATE PROFILE:
-- Name: Melody Yin
-- Current Role: Team Lead, Marketing Strategy & Operations at Mixpanel (Director-level scope, 3 direct reports)
-- Background: Wharton MBA (Business Analytics), BCG Consultant, BAML IB, HSBC Corp Banking
-- Expertise: GTM strategy, pipeline optimization, AI-powered outbound, lead scoring, marketing automation, HubSpot
-- Key Achievement: Deployed AI SDR and intent-based outbound at Mixpanel ($10M+ pipeline impact)
-- Target: Director+ roles in GTM Ops, Strategy Ops, Business Ops, or Chief of Staff to CEO
-- Target Companies: High-growth B2B SaaS/tech, ideally Series B-D
-- Location: NYC (primary), open to Bay Area
-- Comp Target: $350K+ base salary
+${CANDIDATE_PROFILE}
 
 SCORING INSTRUCTIONS:
 Score each dimension on a 1-5 scale with reasoning. Then compute an overall score (0-100).

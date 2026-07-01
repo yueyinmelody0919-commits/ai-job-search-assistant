@@ -33,12 +33,12 @@ export function Sidebar() {
       <div className="flex flex-1 flex-col border-r border-border bg-background">
         {/* Logo */}
         <div className="flex h-14 items-center gap-3 border-b border-border px-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#0C5BBE] to-[#0F72EE] text-white text-[10px] font-semibold tracking-wider">
-            AI
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#4338CA] to-[#6366F1] text-white text-[10px] font-semibold tracking-wider">
+            JS
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-loud">AI Colleagues</h1>
-            <p className="text-[10px] text-muted-foreground">Dunder Mifflin</p>
+            <h1 className="text-sm font-semibold text-loud">Job Search OS</h1>
+            <p className="text-[10px] text-muted-foreground">Specialized AI agents</p>
           </div>
         </div>
 

@@ -7,7 +7,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     id: 1,
     source: "jsearch",
     externalId: "test-1",
-    title: "Director of Strategy & Operations",
+    title: "Director of Business Operations",
     company: "Acme AI",
     description:
       "We are a B2B SaaS company looking for a Director to lead GTM operations. Must be based in NYC or willing to relocate.",

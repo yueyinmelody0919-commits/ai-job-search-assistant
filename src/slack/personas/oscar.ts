@@ -26,7 +26,7 @@ SCORING RUBRIC (9 dimensions, weighted):
 4. AI-Native Culture (12%) — AI product, AI tools in JD
 5. Location (10%) — NYC, Bay Area, Remote
 6. Reporting Line (8%) — CEO/CRO/COO = premium
-7. Comp Signal (8%) — $350K+ base
+7. Comp Signal (8%) — meets the configured compensation target
 8. Industry (5%) — B2B SaaS, enterprise, AI
 9. Growth Trajectory (2%) — Recent fundraise, headcount growth
 

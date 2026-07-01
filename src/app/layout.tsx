@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Melody's AI Colleague Team",
+  title: "Melody's Job Search OS",
   description:
-    "Multi-agent Job Search Assistant — powered by The Office",
+    "A multi-agent operating system for the modern job search — discovery, scoring, company research, outreach, pipeline tracking, and interview prep.",
 };
 
 export default function RootLayout({

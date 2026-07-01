@@ -1,5 +1,5 @@
 /**
- * Main Slack bot process — manages all 7 AI colleagues.
+ * Main Slack bot process — manages all 7 specialized AI agents.
  *
  * Features:
  * - Multi-bot responses: multiple agents can reply to the same message
@@ -57,7 +57,7 @@ async function postAsAgent(agentName: string, channel: string, text: string, thr
 }
 
 async function initializeAgents() {
-  console.log("Initializing AI Colleague Team...\n");
+  console.log("Initializing AI agent team...\n");
   for (const agent of allAgents) {
     const botToken = agent.getBotToken();
     const appToken = agent.getAppToken();
@@ -233,8 +233,8 @@ async function sendProactiveUpdate() {
 
 async function main() {
   console.log("╔══════════════════════════════════════════╗");
-  console.log("║   Melody's AI Colleague Team             ║");
-  console.log("║   Dunder Mifflin Branch                  ║");
+  console.log("║   Job Search OS                          ║");
+  console.log("║   Specialized AI agents                  ║");
   console.log("╚══════════════════════════════════════════╝\n");
 
   await initializeAgents();

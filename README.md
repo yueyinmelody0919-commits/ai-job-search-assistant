@@ -1,61 +1,84 @@
-# Melody's AI Colleague Team
+# Melody's Job Search OS
 
-A multi-agent Job Search Assistant built with [Claude Code](https://claude.ai/claude-code) for the Leena AI Director of Strategy & Operations assignment.
+**A multi-agent operating system for the modern job search.**
 
-Loom walkthrough: https://www.loom.com/share/d54035b03f66466ea2996218c1a1f646
+Job Search OS runs a senior-level job hunt the way you'd run a small GTM
+operation: a team of specialized AI agents handles discovery, evaluation,
+company research, personalized outreach, pipeline tracking, and interview prep —
+coordinating through a shared memory layer, a Slack workspace, and a Next.js
+dashboard.
 
-**GitHub**: [github.com/yueyinmelody0919-commits/leena-job-search-assistant](https://github.com/yueyinmelody0919-commits/leena-job-search-assistant)
-
-> **Build something you'd actually use.** I built a miniature version of Leena's product - for my own job search.
+`ai-job-search-assistant` · Next.js 16 · TypeScript · Claude API · SQLite · Slack
 
 ---
 
 ## Table of Contents
 
-- [What This Is](#what-this-is)
-- [Why This Architecture](#why-this-architecture)
+- [Why This Exists](#why-this-exists)
+- [What It Does](#what-it-does)
+- [The Agents](#the-agents)
 - [System Architecture](#system-architecture)
-- [Agent Orchestration](#agent-orchestration)
 - [Scoring Engine](#scoring-engine)
-- [Integrations](#integrations)
+- [Outreach Pipeline](#outreach-pipeline)
 - [Dashboard](#dashboard)
+- [Tech Stack](#tech-stack)
 - [Key Technical Decisions](#key-technical-decisions)
-- [Deliverables](#deliverables)
-- [Setup](#setup)
+- [Run It Locally](#run-it-locally)
+- [Configuration](#configuration)
 
 ---
 
-## What This Is
+## Why This Exists
 
-An autonomous AI colleague team that finds, evaluates, and acts on job opportunities. Seven AI colleagues - each with a distinct role and an Office character personality - collaborate via Slack and a dashboard to run a job search like a GTM pipeline.
+A serious job search is an operations problem in disguise. You're monitoring
+dozens of sources for new roles, judging each against a nuanced set of
+criteria, researching companies and the people inside them, writing outreach
+that doesn't read like a template, tracking everything through a pipeline, and
+preparing for interviews — continuously, and mostly alone.
 
-**By the numbers:**
-- 11,300+ lines of TypeScript across 85 files
-- 9 live external integrations (asked for 3)
-- 7 AI agents with runtime-configurable capabilities
-- 52+ passing tests with TDD pre-push hooks
-- 14 database tables with shared memory
-- 436+ messages of prompting history documented
+Most "job search tools" are a single search box bolted onto a spreadsheet. This
+project takes the opposite approach: it decomposes the search into distinct
+roles and gives each one to a specialized agent, so the whole thing behaves
+like a team that works while you don't. It's a real system I use to run my own
+search — and a demonstration of multi-agent architecture, preference learning,
+and deep third-party integration built end to end.
 
----
+## What It Does
 
-## Why This Architecture
+- **Discovers** roles in real time across multiple job boards, with instant
+  hard-filtering so only relevant listings ever enter the system.
+- **Scores** every surviving job against a 9-dimension rubric using the Claude
+  API, then learns your true preferences from thumbs-up/down feedback via
+  Thompson Sampling.
+- **Researches** companies and hiring contacts, enriching each opportunity with
+  the context you'd otherwise gather by hand.
+- **Drafts** personalized outreach emails — right recipient, adaptive greeting,
+  role-specific body, resume attached — and saves them to Gmail for your review.
+  Nothing is ever sent without you.
+- **Tracks** a pipeline of opportunities through a Kanban board and conversion
+  funnel.
+- **Coaches** you on skill gaps and surfaces learning resources tied to the
+  roles you're pursuing.
+- **Talks back** in Slack: seven agents collaborate in a channel and via DMs,
+  each with a memorable personality so the system is genuinely nice to use.
 
-The assignment asks for a job search tool. I built a **multi-agent orchestration system** instead - because that's what Leena AI builds.
+## The Agents
 
-| Leena AI Product | This Project |
-|---|---|
-| AI Colleagues with distinct roles | 7 agents: Scout, Analyst, Strategist, Ops, Engineer, Coach, QA |
-| Orchestrator coordinating agents | Central router dispatching messages to 1-3 relevant agents |
-| Deep enterprise integrations | 9 live connectors with real read/write operations |
-| Shared knowledge across agents | SQLite memory system with 14 tables |
-| Runtime-configurable capabilities | Toggle agent capabilities on/off from the dashboard |
-| Human-in-the-loop approval | Thumbs up/down feedback, manual email review before send |
-| Autonomous workflows | Scheduled scans, auto-scoring, draft email generation |
+Each agent is a `BaseAgent` with its own system prompt, Slack identity, and a
+set of capabilities you can toggle at runtime from the dashboard. When a
+capability is disabled it's removed from the agent's prompt, so it simply won't
+attempt that action. The personalities are an affectionate nod to *The Office* —
+they make a system you live in day-to-day far more fun.
 
-This isn't a coincidence. I studied the product and built something that demonstrates I understand how it works at an architectural level.
-
----
+| Agent | Persona | Role | Key Capabilities |
+|-------|---------|------|-----------------|
+| **Scout** | Dwight | Discovery & Research | Search JSearch, search Adzuna, research companies via Tavily |
+| **Analyst** | Oscar | Scoring & Market Intel | Score via Claude, update Thompson Sampling, process feedback |
+| **Strategist** | Jim | Outreach & Networking | Draft emails, send via Gmail, look up contacts |
+| **Ops** | Angela | Pipeline & Scheduling | Manage stages, create calendar events, update Sheets tracker |
+| **Engineer** | Darryl | Platform | Manage whitelist, suggest features, monitor performance |
+| **Coach** | Holly | Learning & Development | Recommend resources, identify skill gaps, search courses |
+| **QA** | Stanley | Quality Assurance | Investigate bugs, monitor tests, track errors |
 
 ## System Architecture
 
@@ -66,13 +89,12 @@ This isn't a coincidence. I studied the product and built something that demonst
                      __________|___|___________
                     |     |     |    |    |    |
                  Scout Analyst Strat Ops Eng Coach QA
-                 (Dwight)(Oscar)(Jim)(Angela)...
                     |     |     |    |
                     v     v     v    v
               +-----------+-----------+-----------+
               |     INTEGRATIONS (9 live systems) |
               |                                   |
-              |  JSearch + Adzuna ... job listings |
+              |  JSearch + Adzuna .. job listings |
               |  Gmail ........... draft/send email|
               |  Google Sheets ... pipeline tracker|
               |  Google Calendar . follow-ups      |
@@ -81,9 +103,8 @@ This isn't a coincidence. I studied the product and built something that demonst
               |  Tavily .......... web research    |
               +-----------+-----------+-----------+
                           |
-                    SQLite (14 tables)
-                    shared memory for
-                    all agents + dashboard
+                    SQLite (shared memory)
+                    for all agents + dashboard
                           |
               +-----------+-----------+
               |   DASHBOARD (Next.js) |
@@ -97,113 +118,57 @@ This isn't a coincidence. I studied the product and built something that demonst
               +-----------------------+
 ```
 
----
-
-## Agent Orchestration
-
-Each agent is a `BaseAgent` instance with a character persona, a system prompt, and a set of capabilities that can be toggled at runtime from the dashboard.
-
-**How it works:**
-1. User sends a message in Slack (DM or #job-search channel)
-2. The router analyzes the message and dispatches to 1-3 relevant agents
-3. Each agent loads its **enabled capabilities** from the database (not hardcoded)
-4. The agent calls Claude with its persona prompt + fresh context from the shared memory
-5. Response is posted back to Slack using that agent's bot token
-
-**Runtime configurability:** Every agent's capabilities can be toggled on/off from the Agents page. When a capability is disabled, it's removed from the agent's system prompt, so Claude won't attempt to use it. This mirrors Leena's approach to capability management.
-
-### The Colleagues
-
-| Agent | Character | Role | Key Capabilities |
-|-------|-----------|------|-----------------|
-| Scout | Dwight Schrute | Discovery & Research | Search JSearch, Search Adzuna, Research via Tavily |
-| Analyst | Oscar Martinez | Scoring & Market Intel | Score via Claude, Update Thompson Sampling, Process feedback |
-| Strategist | Jim Halpert | Outreach & Networking | Draft emails, Send via Gmail, Look up contacts |
-| Ops | Angela Martin | Pipeline & Scheduling | Pipeline stages, Calendar events, Sheets tracker |
-| Engineer | Darryl Philbin | Platform Development | Whitelist, Feature suggestions, Performance monitoring |
-| Coach | Holly Flax | Learning & Development | Learning resources, Skill gaps, Course search |
-| QA | Stanley Hudson | Quality Assurance | Bug investigation, Test monitoring, Error tracking |
-
----
+A single **message router** dispatches each Slack message to the 1–3 relevant
+agents. Every agent reads and writes to the same SQLite memory, so the feed,
+scores, pipeline, contacts, and learnings are always consistent between Slack
+and the dashboard. See [`docs/architecture.md`](./docs/architecture.md) for the
+full breakdown and [`docs/diagrams/`](./docs/diagrams) for Mermaid diagrams.
 
 ## Scoring Engine
 
-### Two-Pass Architecture
+A two-pass design keeps scoring both cheap and accurate:
 
-**Pass 1** eliminates ~70% of listings instantly with no API cost. The key design decision: seniority keywords must appear in the job **title**, not the description, to avoid false positives from JDs that mention "reports to the Director."
+- **Pass 1 — Hard Filter (no LLM):** binary gates on seniority, function,
+  location, company type, and an optional salary floor eliminate the majority
+  of listings instantly. Seniority is checked on the job *title* only, which
+  avoids false positives from JDs that merely mention "reports to the Director."
+- **Pass 2 — Deep Score (Claude API):** survivors are scored across 9 weighted
+  dimensions with per-dimension reasoning. The composite (0–100) is computed
+  locally from per-dimension scores × preference weights — not the model's
+  self-reported overall.
 
-**Pass 2** sends each surviving job to Claude with a structured prompt that returns JSON scores across 9 dimensions. The composite score is computed using preference weights from Thompson Sampling - not Claude's self-reported overall score.
+Weights are learned, not fixed. **Thompson Sampling** models each dimension as a
+Beta distribution and updates it from your feedback, converging on your real
+preferences after ~30 signals. Full details in [`docs/scoring.md`](./docs/scoring.md).
 
-### Thompson Sampling (Preference Learning)
+## Outreach Pipeline
 
-Each scoring dimension is modeled as a Beta(alpha, beta) distribution. When the user gives feedback:
+The email system doesn't just fill in a template — it researches, personalizes,
+and queues:
 
-- **Thumbs up** on a job: alpha increases for that job's high-scoring dimensions (reinforces what you like)
-- **Thumbs down**: beta increases for high-scoring dimensions (penalizes overweighted criteria)
-- **Thumbs up also boosts** the job's composite score to a minimum of 70, making it eligible for outreach
-- **Thumbs down removes** the job from the active feed (moved to "passed" stage)
-
-After ~30 feedback signals, the weights converge on the user's true preferences. The Preferences dashboard shows real-time weight drift.
-
----
-
-## Integrations
-
-### Integration Architecture
-
-### Email Outreach Pipeline
-
-The email system is a key differentiator - it doesn't just draft, it **researches, personalizes, and queues**:
-
-1. **Contact Research**: Claude analyzes the job posting and company to find the right email (careers@company.com, or a specific recruiter)
-2. **Personalized Greeting**: "Dear Recruiting Team" for generic addresses, first name for individuals
-3. **Template with Context**: Body references the specific role and company, not a generic template
-4. **Resume Attached**: PDF automatically attached as MIME multipart
-5. **Gmail Draft**: Saved to drafts for human review - never auto-sent
-6. **Slack Notification**: Digest with links to both the dashboard dossier and the Gmail draft
-
----
+1. **Contact research** — Claude identifies the right recipient (a specific
+   recruiter, or `careers@company.com`).
+2. **Adaptive greeting** — "Dear Recruiting Team" for generic inboxes, first
+   name for individuals.
+3. **Role-specific body** — references the actual role and company.
+4. **Resume attached** — as a MIME multipart attachment.
+5. **Gmail draft** — saved for human review, never auto-sent.
+6. **Slack digest** — links to both the dashboard dossier and the Gmail draft.
 
 ## Dashboard
 
-Eight views, each wired to real data from the shared SQLite database:
+Eight views, each wired to live data from the shared database:
 
-| View | Purpose | Key Features |
-|------|---------|-------------|
-| **Morning Brief** | Daily overview | Stats row, approval queue (clickable), agent activity feed, scan/score buttons |
-| **Job Feed** | Browse & act on jobs | Score badges, thumbs up/down, company dossier with description + radar chart + score breakdown table |
-| **Pipeline** | Track job stages | Kanban board (7 stages), Sankey flow diagram |
-| **Agents** | Configure agents | Activity log, capability toggles (runtime), scheduled tasks, knowledge base |
-| **Network** | Contact lookup | Apollo search, batch populate from top-scored jobs |
-| **Bugs** | Track issues | Auto-generated fix prompts, severity/status tracking |
-| **Learning** | Skill development | Resource links, skill gap analysis |
-| **Preferences** | Scoring weights | Thompson Sampling visualization, feedback history, hard filters |
-
-### Design System
-
-The dashboard uses Leena AI's brand palette (#0F72EE primary blue, light backgrounds, #CFE3FC borders) with Claude platform-style clean components (shadcn/ui).
-
----
-
-## Key Technical Decisions
-
-| Decision | Why |
-|----------|-----|
-| **SQLite over Postgres** | Single-file DB, zero infrastructure, perfect for a self-contained tool |
-| **Thompson Sampling over static weights** | Real ML technique used by LinkedIn/DoorDash - demonstrates analytical sophistication |
-| **Seniority filter on TITLE only** | JDs mention "Director" in descriptions ("reports to Director") - filtering on title avoids false positives |
-| **Composite score computed locally** | Claude's self-reported "overall" was unreliable (all scored 32) - computing from per-dimension scores x weights fixed it |
-| **7 Slack apps, not 1** | Each agent has its own bot token and avatar - feels like real colleagues, not one bot with multiple personalities |
-| **Drafts, not auto-send** | Human-in-the-loop for outreach emails - the system prepares, you approve |
-| **Agent configs in DB, not code** | Runtime-configurable capabilities, not hardcoded - mirrors how enterprise AI products manage agent behavior |
-
----
-
-## Database Schema
-
-14 tables total: jobs, job_scores, feedback, preferences, pipeline, contacts, knowledge, agent_logs, agent_learnings, features, skills, whitelist, bugs, agent_configs.
-
----
+| View | Purpose |
+|------|---------|
+| **Morning Brief** | Daily overview: stats, approval queue, agent activity, scan/score actions |
+| **Job Feed** | Browse and act on jobs; score badges, thumbs up/down, company dossier with radar chart |
+| **Pipeline** | Kanban across 7 stages + Sankey conversion funnel |
+| **Agents** | Activity log, runtime capability toggles, scheduled tasks, knowledge base |
+| **Network** | Contact lookup and batch enrichment from top-scored jobs |
+| **Bugs** | Auto-generated fix prompts with severity/status tracking |
+| **Learning** | Skill-gap analysis and curated resources |
+| **Preferences** | Thompson Sampling weight visualization and feedback history |
 
 ## Tech Stack
 
@@ -211,55 +176,72 @@ The dashboard uses Leena AI's brand palette (#0F72EE primary blue, light backgro
 |-------|-----------|
 | Framework | Next.js 16 (App Router) |
 | UI | shadcn/ui, Tailwind CSS |
-| Charts | Nivo (Sankey, Radar) |
-| Database | SQLite via Drizzle ORM (@libsql/client) |
+| Charts | Nivo (Sankey, Radar), Recharts, React Flow |
+| Database | SQLite via Drizzle ORM (`@libsql/client`) |
 | AI | Claude API (Anthropic) |
 | Slack | Bolt SDK, Socket Mode |
 | Auth | Auth.js v5, Google OAuth |
-| Testing | Vitest, 52+ tests |
-| CI/Quality | Husky hooks (typecheck + lint pre-commit, tests pre-push) |
-| Dev Tool | Claude Code (entire project built with it) |
+| Testing | Vitest, Husky pre-commit/pre-push hooks |
 
----
+## Key Technical Decisions
 
-## Deliverables
+| Decision | Why |
+|----------|-----|
+| **SQLite over Postgres** | Single-file DB, zero infra, ideal for a self-contained personal tool |
+| **Thompson Sampling over static weights** | Real preference learning that adapts to your feedback |
+| **Seniority filter on title only** | JDs mention "Director" in passing; title-only filtering avoids false positives |
+| **Composite score computed locally** | The model's self-reported overall was unreliable; per-dimension × weights is stable |
+| **7 Slack apps, not 1** | Each agent has its own token and avatar — it feels like a team, not one bot wearing masks |
+| **Drafts, not auto-send** | Human-in-the-loop for all outreach — the system prepares, you approve |
+| **Agent configs in the DB** | Capabilities are runtime-configurable, not hardcoded |
 
-| Deliverable | Location | Description |
-|-------------|----------|-------------|
-| **Flow walkthrough** | [`docs/walkthrough-script.md`](./docs/walkthrough-script.md) | 10-15 min demo script with 7 acts and checklist |
-| **Code** | This repo | 11,300+ lines, 85 files, 17 commits |
-| **Scoring note** | [`SCORING_NOTE.md`](./SCORING_NOTE.md) | Half-page: two-pass architecture, Thompson Sampling, exclusions |
-| **Prompting history** | [`FULL_CHAT_HISTORY.md`](./FULL_CHAT_HISTORY.md) | 233KB, 436+ messages - complete build session log |
-
----
-
-## Setup
+## Run It Locally
 
 ```bash
-git clone https://github.com/yueyinmelody0919-commits/leena-job-search-assistant.git
-cd leena-job-search-assistant
+git clone <your-fork-url> ai-job-search-assistant
+cd ai-job-search-assistant
 npm install
 cp .env.example .env
-# Fill in API keys (see .env.example)
+# Fill in your profile + API keys (see Configuration below)
 
 npm run db:seed    # Initialize preferences + agent configs
-npm run dev        # Dashboard at localhost:3000
-npm run slack:dev  # Slack bots (separate terminal)
-npm test           # 52+ passing tests
+npm run dev        # Dashboard at http://localhost:3000
+npm run slack:dev  # Slack bots (separate terminal, optional)
+npm test           # Run the test suite
 ```
 
-### Required API Keys
+Drop your resume at `./data/resume.pdf` (git-ignored) so outreach drafts can
+attach it, or point `RESUME_PATH` elsewhere.
+
+## Configuration
+
+Personalize the search by editing `.env` — the dashboard and agents adapt
+automatically:
+
+| Variable | Purpose |
+|----------|---------|
+| `OWNER_EMAIL` | Whitelisted login + default recipient for self/test emails |
+| `SENDER_NAME` / `SENDER_CONTACT` / `SENDER_LINKEDIN` | Identity used in outreach drafts |
+| `SENDER_BIO` | Optional bio paragraph inserted into outreach |
+| `RESUME_PATH` / `RESUME_FILENAME` | Resume attached to drafts |
+| `CANDIDATE_PROFILE` | Overrides the profile the scorer evaluates against |
+| `MIN_SALARY_FLOOR` | Optional Pass-1 salary floor (0 = disabled) |
+
+### API keys
 
 | Key | Source | Free Tier |
 |-----|--------|-----------|
-| ANTHROPIC_API_KEY | [console.anthropic.com](https://console.anthropic.com) | Pay-as-you-go |
-| RAPIDAPI_KEY (JSearch) | [rapidapi.com](https://rapidapi.com) | 500 req/mo |
-| ADZUNA_APP_ID + KEY | [developer.adzuna.com](https://developer.adzuna.com) | Free |
-| GOOGLE_CLIENT_ID/SECRET/REFRESH_TOKEN | Google Cloud Console | Free |
-| APOLLO_API_KEY | [app.apollo.io](https://app.apollo.io) | 50 credits/mo |
-| TAVILY_API_KEY | [tavily.com](https://tavily.com) | 1,000 searches/mo |
-| SLACK_*_BOT_TOKEN (x7) | [api.slack.com](https://api.slack.com) | Free |
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) | Pay-as-you-go |
+| `RAPIDAPI_KEY` (JSearch) | [rapidapi.com](https://rapidapi.com) | 500 req/mo |
+| `ADZUNA_APP_ID` + `KEY` | [developer.adzuna.com](https://developer.adzuna.com) | Free |
+| `GOOGLE_CLIENT_ID`/`SECRET`/`REFRESH_TOKEN` | Google Cloud Console | Free |
+| `APOLLO_API_KEY` | [app.apollo.io](https://app.apollo.io) | 50 credits/mo |
+| `TAVILY_API_KEY` | [tavily.com](https://tavily.com) | 1,000 searches/mo |
+| `SLACK_*_BOT_TOKEN` (×7) | [api.slack.com](https://api.slack.com) | Free |
+
+Slack is optional — the dashboard runs standalone. See
+[`docs/slack-setup.md`](./docs/slack-setup.md) for the full bot setup guide.
 
 ---
 
-*Built by Melody Yin using Claude Code, May 2026*
+*Built by Melody Yin with Claude Code.*

@@ -34,21 +34,21 @@ export function ScoreRadar({ scores }: ScoreRadarProps) {
         margin={{ top: 30, right: 60, bottom: 30, left: 60 }}
         curve="linearClosed"
         borderWidth={2}
-        borderColor="rgba(15,114,238,0.8)"
+        borderColor="rgba(79,70,229,0.8)"
         gridLevels={5}
         gridShape="circular"
         gridLabelOffset={12}
         dotSize={6}
-        dotColor="#0F72EE"
+        dotColor="#4F46E5"
         dotBorderWidth={1}
         dotBorderColor="#FFFFFF"
-        colors={["rgba(15,114,238,0.3)"]}
+        colors={["rgba(79,70,229,0.3)"]}
         fillOpacity={0.3}
         blendMode="normal"
         animate
         theme={{
           grid: {
-            line: { stroke: "rgba(207,227,252,0.8)" },
+            line: { stroke: "rgba(199,196,240,0.8)" },
           },
           axis: {
             ticks: {
@@ -60,7 +60,7 @@ export function ScoreRadar({ scores }: ScoreRadarProps) {
               background: "#FFFFFF",
               color: "#191B1F",
               borderRadius: "12px",
-              border: "1px solid #CFE3FC",
+              border: "1px solid #E4E4F0",
               fontSize: "12px",
               boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
             },

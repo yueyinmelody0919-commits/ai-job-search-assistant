@@ -123,7 +123,7 @@ async function main() {
   console.log("\nPosting welcome message...");
   await slackApi("chat.postMessage", primaryToken, {
     channel: channelId,
-    text: "FACT: The AI Colleague Team is now assembled in this channel. I, Dwight Schrute — er, Scout — will be coordinating operations. You may address any of us by name or simply state your request. We will determine the appropriate responder.\n\n🔍 Scout (Dwight) — Job discovery\n📊 Analyst (Oscar) — Scoring\n✉️ Strategist (Jim) — Outreach\n⏰ Ops (Angela) — Pipeline\n🛠️ Engineer (Darryl) — Platform\n📚 Coach (Holly) — Learning\n🐛 QA (Stanley) — Bugs\n\nAs Assistant Regional Manager of your job search, I recommend we begin immediately.",
+    text: "FACT: The Job Search OS agent team is now assembled in this channel. I, Dwight Schrute — er, Scout — will be coordinating operations. You may address any of us by name or simply state your request. We will determine the appropriate responder.\n\n🔍 Scout (Dwight) — Job discovery\n📊 Analyst (Oscar) — Scoring\n✉️ Strategist (Jim) — Outreach\n⏰ Ops (Angela) — Pipeline\n🛠️ Engineer (Darryl) — Platform\n📚 Coach (Holly) — Learning\n🐛 QA (Stanley) — Bugs\n\nAs Assistant Regional Manager of your job search, I recommend we begin immediately.",
   });
 
   console.log(`\n✓ Done! Channel ID: ${channelId}`);

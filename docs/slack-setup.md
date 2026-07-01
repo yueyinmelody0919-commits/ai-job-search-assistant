@@ -3,7 +3,7 @@
 ## Step 1: Create a Workspace
 
 Go to [slack.com/create](https://slack.com/create) and create a free workspace.
-Suggested name: **Dunder Mifflin Jobs** (or whatever you like).
+Suggested name: **Job Search HQ** (or whatever you like).
 
 ## Step 2: Create 7 Bot Apps
 

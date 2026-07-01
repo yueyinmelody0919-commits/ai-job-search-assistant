@@ -16,7 +16,7 @@ const skills = [
   },
   {
     topic: "Consumption-Based Pricing",
-    relevance: "Leena AI uses this model — likely interview topic",
+    relevance: "Increasingly common GTM model — useful for ops interviews",
     status: "suggested",
     resources: [
       { label: "OpenView Pricing Guide", url: "https://openviewpartners.com/blog/consumption-based-pricing/" },
@@ -25,7 +25,7 @@ const skills = [
   },
   {
     topic: "Multi-Agent Systems",
-    relevance: "Aligns with Leena AI's product architecture",
+    relevance: "Core to AI-native operations and product roles",
     status: "in_progress",
     resources: [
       { label: "CrewAI Documentation", url: "https://docs.crewai.com/" },

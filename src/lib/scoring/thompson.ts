@@ -59,7 +59,7 @@ export const DEFAULT_DIMENSIONS: ScoringDimension[] = [
   {
     dimension: "comp_signal",
     baseWeight: 0.08,
-    description: "Salary range suggests $350K+ base or comparable",
+    description: "Salary range meets the configured compensation target",
   },
   {
     dimension: "industry",

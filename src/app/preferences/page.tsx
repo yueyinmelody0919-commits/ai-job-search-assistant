@@ -29,7 +29,7 @@ const DIMENSION_LABELS: Record<string, string> = {
   ai_native: "AI-Native Culture",
   location: "Location",
   reporting_line: "Reporting Line",
-  comp_signal: "Compensation ($350K+)",
+  comp_signal: "Compensation",
   industry: "Industry (B2B SaaS)",
   growth_trajectory: "Growth Trajectory",
 };
@@ -165,7 +165,7 @@ export default function PreferencesPage() {
                 "GTM Ops / Strategy Ops / CoS",
                 "NYC or Bay Area or Remote",
                 "B2B / SaaS / Tech / AI",
-                "$300K+ base salary",
+                "Meets salary target (configurable)",
               ].map((item) => (
                 <Badge key={item} variant="outline" className="text-[10px]">
                   {item}

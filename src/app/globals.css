@@ -11,7 +11,7 @@
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
 
-  /* Leena-inspired palette */
+  /* Brand palette */
   --color-surface: var(--surface);
   --color-elevated: var(--elevated);
   --color-dim: var(--dim);
@@ -59,7 +59,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Leena AI color scheme — light mode */
+/* Job Search OS color scheme — light mode (indigo) */
 :root {
   --background: #FFFFFF;
   --foreground: #32363E;
@@ -68,42 +68,42 @@
   --card-foreground: #32363E;
   --popover: #FFFFFF;
   --popover-foreground: #32363E;
-  --primary: #0F72EE;
+  --primary: #4F46E5;
   --primary-foreground: #FFFFFF;
-  --secondary: #F3F8FE;
+  --secondary: #F5F5FB;
   --secondary-foreground: #191B1F;
-  --muted: #F3F8FE;
+  --muted: #F5F5FB;
   --muted-foreground: #656971;
-  --accent: #E7F1FD;
+  --accent: #EEF0FE;
   --accent-foreground: #191B1F;
   --destructive: #D94444;
-  --border: #CFE3FC;
-  --input: #CFE3FC;
-  --ring: #0F72EE;
-  --chart-1: #0F72EE;
-  --chart-2: #0C5BBE;
-  --chart-3: #09448F;
-  --chart-4: #6FAAF5;
-  --chart-5: #3F8FF3;
+  --border: #E4E4F0;
+  --input: #E4E4F0;
+  --ring: #4F46E5;
+  --chart-1: #4F46E5;
+  --chart-2: #4338CA;
+  --chart-3: #3730A3;
+  --chart-4: #A5B4FC;
+  --chart-5: #818CF8;
   --radius: 0.75rem;
 
-  /* Leena custom tokens */
-  --surface: #F3F8FE;
-  --elevated: #E7F1FD;
+  /* Brand custom tokens */
+  --surface: #F5F5FB;
+  --elevated: #EEF0FE;
   --dim: #656971;
   --subtle: #3F444D;
-  --rose: #0F72EE;
-  --rose-dim: #0C5BBE;
+  --rose: #4F46E5;
+  --rose-dim: #4338CA;
 
   /* Sidebar */
   --sidebar: #FFFFFF;
   --sidebar-foreground: #32363E;
-  --sidebar-primary: #0F72EE;
+  --sidebar-primary: #4F46E5;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E7F1FD;
+  --sidebar-accent: #EEF0FE;
   --sidebar-accent-foreground: #191B1F;
-  --sidebar-border: #CFE3FC;
-  --sidebar-ring: #0F72EE;
+  --sidebar-border: #E4E4F0;
+  --sidebar-ring: #4F46E5;
 }
 
 /* Dark mode override (kept for reference, not active) */
@@ -115,7 +115,7 @@
   --card-foreground: #E0E2E5;
   --popover: #0D0E10;
   --popover-foreground: #E0E2E5;
-  --primary: #0F72EE;
+  --primary: #6366F1;
   --primary-foreground: #FFFFFF;
   --secondary: #141618;
   --secondary-foreground: #E0E2E5;
@@ -126,21 +126,21 @@
   --destructive: #E85A5A;
   --border: #1E2024;
   --input: #1E2024;
-  --ring: #0F72EE;
+  --ring: #6366F1;
   --surface: #0D0E10;
   --elevated: #141618;
   --dim: #4A4D53;
   --subtle: #656971;
-  --rose: #0F72EE;
-  --rose-dim: #0C5BBE;
+  --rose: #6366F1;
+  --rose-dim: #818CF8;
   --sidebar: #060708;
   --sidebar-foreground: #E0E2E5;
-  --sidebar-primary: #0F72EE;
+  --sidebar-primary: #6366F1;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #141618;
   --sidebar-accent-foreground: #E0E2E5;
   --sidebar-border: #1E2024;
-  --sidebar-ring: #0F72EE;
+  --sidebar-ring: #6366F1;
 }
 
 @layer base {

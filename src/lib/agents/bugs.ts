@@ -24,7 +24,7 @@ interface BugReportInput {
  */
 function generateFixPrompt(input: BugReportInput): string {
   const parts = [
-    `Fix the following bug in the Leena Job Search Assistant project.`,
+    `Fix the following bug in the Job Search OS project.`,
     ``,
     `## Bug: ${input.title}`,
     ``,

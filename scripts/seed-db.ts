@@ -8,7 +8,7 @@ import { drizzle } from "drizzle-orm/libsql";
 import * as schema from "../src/lib/db/schema";
 import { DEFAULT_DIMENSIONS } from "../src/lib/scoring/thompson";
 
-const client = createClient({ url: "file:./data/colleague-team.db" });
+const client = createClient({ url: process.env.DATABASE_URL || "file:./data/job-search.db" });
 const db = drizzle(client, { schema });
 
 async function main() {
@@ -30,14 +30,15 @@ async function main() {
     console.log(`  — Preferences already seeded (${existing.length} dimensions)`);
   }
 
-  // Seed whitelist with Melody's email
+  // Seed whitelist with the owner's email (set OWNER_EMAIL in .env to your own).
+  const ownerEmail = process.env.OWNER_EMAIL || "you@example.com";
   const existingWhitelist = await db.select().from(schema.whitelist);
   if (existingWhitelist.length === 0) {
     await db.insert(schema.whitelist).values({
-      email: "yueyin.melody0919@gmail.com",
+      email: ownerEmail,
       approvedBy: "system",
     });
-    console.log("  ✓ Added yueyin.melody0919@gmail.com to whitelist");
+    console.log(`  ✓ Added ${ownerEmail} to whitelist`);
   } else {
     console.log(`  — Whitelist already has ${existingWhitelist.length} entries`);
   }

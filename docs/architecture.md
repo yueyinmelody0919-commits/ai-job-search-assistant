@@ -2,34 +2,45 @@
 
 ## Overview
 
-Melody's AI Colleague Team is a multi-agent job search assistant that mirrors Leena AI's product architecture: an orchestrator coordinating specialized AI agents with deep integrations into external systems and a shared memory layer.
+**Job Search OS** is a multi-agent operating system for running a modern job
+search. A senior job search is really a small operation: you have to discover
+roles across many sources, evaluate them against a nuanced set of criteria,
+research companies and people, run personalized outreach, track a pipeline of
+opportunities, and prepare for interviews — all at once, all the time.
+
+The architecture models that operation directly. Instead of one monolithic
+assistant, the work is split across **specialized AI agents**, each owning a
+stage of the funnel, coordinating through a **shared memory layer** and a
+**message router**, with **deep integrations** into the systems where the work
+actually happens (job boards, email, calendar, spreadsheets, contact data,
+web search, and an LLM for reasoning).
 
 ## Architecture Diagram
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                    MELODY'S AI COLLEAGUE TEAM                     │
+│                          JOB SEARCH OS                            │
 │                                                                    │
 │  ┌─────────────────────────────────────────────────────────────┐  │
 │  │              CENTRAL MEMORY SYSTEM (SQLite)                  │  │
 │  │                                                               │  │
 │  │  jobs · job_scores · feedback · preferences · pipeline        │  │
 │  │  contacts · knowledge · agent_logs · agent_learnings          │  │
-│  │  features · skills · whitelist · meme_log                     │  │
+│  │  features · skills · whitelist · bugs · agent_configs         │  │
 │  └─────────────┬───────────────────────────────┬───────────────┘  │
 │                │                               │                   │
 │  ┌─────────────▼───────────────┐  ┌────────────▼────────────┐    │
 │  │     SLACK LAYER             │  │   DASHBOARD (Next.js)    │    │
 │  │                             │  │                          │    │
-│  │  Scout (Dwight) ─ Discovery │  │  Morning Brief           │    │
-│  │  Analyst (Oscar) ─ Scoring  │  │  Job Feed + Dossier      │    │
-│  │  Strategist (Jim) ─ Outreach│  │  Pipeline Kanban+Sankey  │    │
-│  │  Ops (Angela) ─ Pipeline    │  │  Agent Orchestration     │    │
-│  │  Engineer (Darryl) ─ DevOps │  │  Network Map             │    │
-│  │  Coach (Holly) ─ L&D        │  │  Preferences + Learning  │    │
-│  │  QA (Stanley) ─ Quality     │  │                          │    │
+│  │  Scout ─ Discovery          │  │  Morning Brief           │    │
+│  │  Analyst ─ Scoring          │  │  Job Feed + Dossier      │    │
+│  │  Strategist ─ Outreach      │  │  Pipeline Kanban+Sankey  │    │
+│  │  Ops ─ Pipeline             │  │  Agent Orchestration     │    │
+│  │  Engineer ─ Platform        │  │  Network Map             │    │
+│  │  Coach ─ Learning           │  │  Preferences + Learning  │    │
+│  │  QA ─ Quality               │  │                          │    │
 │  │                             │  │  Auth: Google OAuth       │    │
-│  │  Socket Mode · Meme Engine  │  │  Whitelist via Darryl    │    │
+│  │  Socket Mode                │  │  Access via whitelist    │    │
 │  └─────────────────────────────┘  └─────────────────────────┘    │
 │                                                                    │
 │  ┌─────────────────── INTEGRATIONS (9) ─────────────────────────┐ │
@@ -41,7 +52,7 @@ Melody's AI Colleague Team is a multi-agent job search assistant that mirrors Le
 │  │  Calendar API ─── Follow-ups + interview prep                 │ │
 │  │  Apollo.io API ── People search + company enrichment          │ │
 │  │  Slack API ────── 7 bot apps (Socket Mode)                    │ │
-│  │  Claude API ───── Scoring, drafting, agent brains             │ │
+│  │  Claude API ───── Scoring, drafting, agent reasoning          │ │
 │  │  Tavily API ───── Web search for agent research               │ │
 │  │                                                               │ │
 │  └───────────────────────────────────────────────────────────────┘ │
@@ -52,16 +63,18 @@ Melody's AI Colleague Team is a multi-agent job search assistant that mirrors Le
 
 Two-pass architecture:
 
-1. **Pass 1 (Hard Filter)**: Instant binary gates (seniority, function, location, company type). No LLM cost.
-2. **Pass 2 (Deep Score)**: Claude API with structured JSON rubric across 9 weighted dimensions.
+1. **Pass 1 (Hard Filter)**: Instant binary gates (seniority, function,
+   location, company type, optional salary floor). No LLM cost.
+2. **Pass 2 (Deep Score)**: Claude API with a structured JSON rubric across
+   9 weighted dimensions.
 
 ### Preference Learning
 
 Thompson Sampling (Bayesian multi-armed bandit):
-- Each dimension modeled as Beta(alpha, beta) distribution
+- Each dimension modeled as a Beta(alpha, beta) distribution
 - Feedback updates posteriors → weights shift over time
 - Converges after ~30 signals
-- Same technique used by LinkedIn and DoorDash
+- The same technique used in large-scale recommendation and ranking systems
 
 ## Tech Stack
 
@@ -71,12 +84,11 @@ Thompson Sampling (Bayesian multi-armed bandit):
 | Visualization | React Flow, Nivo (Sankey, Radar), Recharts |
 | Animation | Framer Motion |
 | Backend | Next.js API Routes |
-| Database | SQLite via Drizzle ORM (12 tables) |
+| Database | SQLite via Drizzle ORM |
 | AI | Claude API (Anthropic) |
 | Slack | Bolt SDK, Socket Mode |
 | Auth | Auth.js v5, Google OAuth |
-| Testing | Vitest, 52+ tests, Husky hooks |
-| Deployment | Vercel (dashboard) + Railway (Slack bots) |
+| Testing | Vitest, Husky hooks |
 
 ## Data Flow
 
@@ -94,11 +106,11 @@ Job API (JSearch/Adzuna)
 ## Agent Communication
 
 Agents communicate via Slack using three patterns:
-1. **DMs**: User messages a specific agent directly
+1. **DMs**: You message a specific agent directly
 2. **@mentions**: Agents tag each other in channels for handoffs
 3. **Shared Memory**: All agents read/write to the same SQLite tables
 
-The AgentRouter determines which agent handles each message based on:
+The message router determines which agent handles each message based on:
 - DM recipient (specific bot)
 - @mention in channel messages
 - Keyword-based fallback routing
