@@ -100,8 +100,9 @@ preferences as you give feedback, alongside the configurable hard filters.
 
 **Slack digest** — the daily briefing posted to `#job-search`, with scores,
 recipients, and links to both the dashboard dossier and the Gmail draft.
+*(Workspace name, company names, and contact details are blurred for privacy.)*
 
-![Slack daily digest](./docs/screenshots/slack-digest.png)
+![Slack daily digest — redacted for privacy](./docs/screenshots/slack-digest.png)
 
 ## The Agents
 
