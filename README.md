@@ -16,6 +16,7 @@ dashboard.
 
 - [Why This Exists](#why-this-exists)
 - [What It Does](#what-it-does)
+- [Screenshots](#screenshots)
 - [The Agents](#the-agents)
 - [System Architecture](#system-architecture)
 - [Scoring Engine](#scoring-engine)
@@ -61,6 +62,46 @@ and deep third-party integration built end to end.
   roles you're pursuing.
 - **Talks back** in Slack: seven agents collaborate in a channel and via DMs,
   each with a memorable personality so the system is genuinely nice to use.
+
+## Screenshots
+
+**Morning Brief** — daily overview with live stats, an approval queue of
+top-scored roles, and a real-time agent activity feed.
+
+![Morning Brief dashboard](./docs/screenshots/morning-brief.png)
+
+**Job Feed** — every discovered role with its composite score badge and
+one-click thumbs up/down feedback that trains the ranking.
+
+![Job Feed](./docs/screenshots/job-feed.png)
+
+**Job Dossier** — per-dimension score breakdown with the model's reasoning,
+plus one-click actions to draft outreach, schedule follow-ups, or open the
+original listing.
+
+![Job dossier with score breakdown](./docs/screenshots/job-dossier.png)
+
+**Pipeline** — a Sankey conversion funnel over a Kanban board tracking every
+opportunity from discovered through offer.
+
+![Pipeline flow and Kanban](./docs/screenshots/pipeline.png)
+
+**Agents** — the orchestration view: seven specialized agents, each with live
+activity and runtime-toggleable capabilities.
+
+![Agent orchestration grid](./docs/screenshots/agents.png)
+
+![Agent capability toggles](./docs/screenshots/agent-capabilities.png)
+
+**Preferences** — Thompson Sampling weights drifting toward your true
+preferences as you give feedback, alongside the configurable hard filters.
+
+![Preferences and Thompson Sampling weights](./docs/screenshots/preferences.png)
+
+**Slack digest** — the daily briefing posted to `#job-search`, with scores,
+recipients, and links to both the dashboard dossier and the Gmail draft.
+
+![Slack daily digest](./docs/screenshots/slack-digest.png)
 
 ## The Agents
 
